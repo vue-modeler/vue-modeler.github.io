@@ -1,0 +1,74 @@
+---
+title: Работа с SSR
+description: Server-Side Rendering с контейнером зависимостей
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+Для работы с Server-Side Rendering используйте встроенный `SsrStateService`:
+
+## Создание изоморфной модели
+
+```typescript
+class MyIsomorphicModel {
+  protected _state: ShallowRef<Record<string, unknown>>;
+
+  constructor(private api: Api, private ssrStateService: SsrStateService) {
+    // Восстанавливаем состояние с сервера
+    const stateFromServer = ssrStateService.extractState<Record<string, unknown>>('myModelState');
+    this._state = shallowRef(stateFromServer || {});
+
+    // Регистрируем сериализатор для передачи на клиент
+    this.ssrStateService.addSerializer(() => ({
+      extractionKey: 'myModelState',
+      value: this._state.value,
+    }));
+
+    this.initialize();
+  }
+
+  get state(): Readonly<Record<string, unknown>> {
+    return this._state.value;
+  }
+
+  async initialize(): Promise<void> {
+    if (!this._state.value) {
+      this._state.value = await this.api.fetchState();
+    }
+  }
+}
+```
+
+## Использование в компоненте
+
+```html
+<template>
+  <div>{{ model.state }}</div>
+</template>
+
+<script setup lang="ts">
+import { useMyIsomorphicModel } from '@/providers/myIsomorphicModel';
+
+const model = useMyIsomorphicModel();
+
+onServerPrefetch(async () => {
+  await model.initialize();
+});
+</script>
+```
+
+## Сериализация состояния
+
+```typescript
+// На сервере
+import { useSsrState } from '@vue-modeler/dc';
+
+function ssrHydration(ctx: Context): void {
+  const ssrStateService = app.$vueModelerDc.get(useSsrState.asKey).instance;
+  ctx.state = ssrStateService.injectState(ctx.state);
+}
+```
+
+<Aside type="tip">
+SSR позволяет передавать состояние с сервера на клиент, обеспечивая быструю загрузку и SEO-оптимизацию.
+</Aside>

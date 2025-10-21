@@ -1,6 +1,7 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
+import plantuml from 'astro-plantuml';
 
 // https://astro.build/config
 export default defineConfig({
@@ -9,12 +10,13 @@ export default defineConfig({
 		defaultLocale: "ru",
 	},
 	integrations: [
+		plantuml(),
 		starlight({
 			title: 'Vue Modeler',
 			description: 'Мощная библиотека для управления состоянием в Vue.js приложениях',
-			social: {
-				github: 'https://github.com/your-username/vue-modeler',
-			},
+			social: [
+				{ icon: 'github', label: 'GitHub', href: 'https://github.com/your-username/vue-modeler' },
+			],
 			sidebar: [
 				{
 					label: 'Введение',
@@ -27,7 +29,8 @@ export default defineConfig({
 				{
 					label: 'Основы',
 					items: [
-						{ label: 'Модели', link: '/guides/models/' },
+						{ label: 'Контейнер', link: '/guides/container/' },
+						{ label: 'Модель', link: '/guides/models/' },
 						{ label: 'Действия', link: '/guides/actions/' },
 						{ label: 'Состояния', link: '/guides/states/' },
 						{ label: 'Декораторы', link: '/guides/decorators/' },
@@ -40,6 +43,7 @@ export default defineConfig({
 						{ label: 'Отмена операций', link: '/guides/abort/' },
 						{ label: 'Блокировка действий', link: '/guides/locking/' },
 						{ label: 'Жизненный цикл', link: '/guides/lifecycle/' },
+						{ label: 'Работа с SSR', link: '/guides/ssr/' },
 					],
 				},
 				{

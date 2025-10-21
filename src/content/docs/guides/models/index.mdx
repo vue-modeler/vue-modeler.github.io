@@ -1,437 +1,327 @@
 ---
-title: Модели
+title: Модель
 description: Подробное руководство по созданию и использованию моделей в Vue Modeler
 ---
 
-Модель хранит состоятние предметной области и предоставляет методы для его именения. Состояние часть модели и неотделимо от модели.  
+import { Aside } from '@astrojs/starlight/components';
 
-Методы изменения состояния бывают синхронные и асинхронные.
-Асинхроннные методы меняющие состотяние - это действия.
+Модель объединяет состояние (данные) и поведение (действия) в единый реактивный объект, который автоматически управляет своими эффектами и очищает их при уничтожении.
 
-еshallow reactive объект, который создается нёа основе класса `ProtoModel`.
+<Aside type="note">
+**Модель = данные + действия + реактивность + управление эффектами**
+</Aside>
 
-## Создание модели
+## Основные понятия
 
-Все модели должны наследоваться от базового класса `ProtoModel`:
+В Vue Modeler существует четкая иерархия понятий, которые важно понимать для эффективной работы с моделями.
+
+**ProtoModel** -- это абстрактный базовый класс, который предоставляет фундаментальную функциональность для всех моделей. Это "движок" системы моделей, который:
+- создает для каждой модели свой `EffectScope`,  
+- преобразует методы с декораторами `@action` в действия и организует к ним доступ  
+- предоставляет единый конструктор моделей -- статический метод `model`,  
+- имеет встроенные методы `watch` и `computed`, которые регистрируют эффекты внутри локального EffectScope  
+- очищает эффекты при уничтожении модели
+
+**Класс модели** -- это обычный класс, унаследованный от `ProtoModel`, который определяет структуру и поведение конкретной модели. Это "шаблон" для создания экземпляров моделей.
+
+Класс модели определяет:
+
+- **Структуру состояния**: какие данные хранит модель,  
+- **Действия**: асинхронные методы помеченные декоратором `@action`, которые меняют состояние модели,  
+- **Бизнес-логику**: правила и ограничения для работы с данными,  
+- **Наблюдатели и вычисляемые свойства**: производные значения на основе состояния.
+
+**Модель** -- это shallow reactive объект со своим EffectScope, полученный из экземпляра класса, в котором действия -- это исполняемые объекты со своим реактивным состоянием.
+
+## Конструктор и создание модели
+
+Чтобы создать модель определите конструктор и вызовите статический метод `model`.
 
 ```typescript
-import { ProtoModel } from 'vue-modeler/model'
+// counter.ts
+import { ProtoModel, action } from '@vue-modeler/model'
 
-export class CurrentUser extends ProtoModel {
-  // Свойства модели
-  protected name = string
+export class Counter extends ProtoModel {
+  ...
+  constructor(
+    private apiService: SomeApiService,
+  ) {
+    super()
+  }
+  ...
+}
+
+// Это модель
+const counterModel = Counter.model(new ApiService())
+
+// Это экземпляр класса. НЕ модель.
+const counter = new Counter(new ApiService())
+
+```
+
+
+<Aside type="note">
+ Если вызвать конструктор через `new`, то вы получите экземпляр класса.  Экземпляр класса -- это не модель, он не реактивен, и действия не объекты.  
+</Aside>
+   
+Метод `model` -- универсальный именованный конструктор, он определен в `ProtoModel` и существует во всех классах модели.   
+`model` копирует сигнатуру конструктора класса, поэтому поверка типов в TS будет работать.
+
+Под капотом `model` создает экземпляр класса и применяет к нему статический метод `createModel`. `createModel` -- это фабрика модели. Она делает из экземпляра класса `shallowReactive` объект и оборачивает в прокси, который превращает действия в объекты.
+
+Для особых случаев вы можете сделать свой именованный конструктор, как статический метод. У него будет своя сигнатура, в зависимости от контекста.
+
+Чтобы новый конструктор возвращал модель, создайте  экземпляр класса и примените к нему статический метод `createModel`. 
+
+```typescript wrap=false {8,10,12}
+// counter.ts
+import { ProtoModel, action } from '@vue-modeler/model'
+
+export class Counter extends ProtoModel {
+  protected _count = 0
+
+  static customFactoryModel(startValue: number, apiService: SomeApiService): Model<Counter> {
+    // 1. создаем экземпляр класса
+    const counter = new Counter(apiService)
+    // 2. устанавливаем начальное значение
+    counter._count = startValue
+    // 3. делаем модель из экземпляра класса
+    return Counter.createModel(counter)
+  }
+
+  constructor(
+    private apiService: SomeApiService,
+  ) {
+    super()
+  }
+  ...
+}
+
+// 4. получаем модель двумя способами в зависимости от ситуации
+const customCounter = Counter.customFactoryModel(10, new ApiService())
+const defaultCounter = Counter.model(new ApiService())
+```
+
+## Уничтожение модели 
+
+Все модели имеют `destructor`, он определен в `ProtoModel`. Он удалит все эффекты и effect Scope.  Его нужно вызвать, когда модель больше не нужна. Если используете контейнер `vue-modeler/dc`, то не нужно беспокоиться: контейнер автоматически вызовет `destructor` и удалит модель, когда она не используется
+
+Если нужны дополнительные операции при удалении, определите свой деструктор. 
+
+<Aside type="caution">
+ Обязательно вызывайте `super.destructor`, иначе получите утечки памяти
+</Aside>
+
+## Свойства
+
+Значение свойств -- это и есть состояние модели, поэтому состояние неотделимо от модели. Нет отдельного хранилища состояния.
+
+Публичные и защищенные свойства реактивны автоматически после создания модели, без явного применения vue composition api. Так происходит, потому что `model` -- shallow reactive объект. Приватные свойства не будут реактивными. 
+
+Используйте vue composition api явно при создании свойств, если  
+- собираетесь наблюдать за свойством,  
+- нужна глубокая реактивность для сложных объектов,  
+- нужна реактивность приватного свойства.
+
+Делайте свойства защищенными, доступ открывайте через геттеры. Это позволит избежать прямых мутаций свойств и инкапсулировать состояние. 
+
+```typescript
+// counter.ts
+import { ProtoModel, action } from '@vue-modeler/model'
+
+export class Counter extends ProtoModel {
   
-  get isAnonymous(): boolean {
-    return !this.name
+  // Оба свойства будут реактивны в модели автоматически.
+  // Использовать Vue Composition API не нужно.
+  public value1 = 0
+  protected _value2 = 0
+
+  constructor(
+    // это тоже свойство. Оно не будет реактивным, потому что приватное.
+    private apiService: SomeApiService,
+  ) {
+    super()
+
+    // Этот наблюдатель НЕ РАБОТАЕТ,
+    // потому что в конструкторе this еще не shallow reactive
+    this.watch(
+      () => this.value1,
+      () => {
+        console.log('value1 changed', this.value1)
+      }
+    )
   }
 
-  // Методы модели
-  @action async login(username: string, password: string): Promise<void> {
-    const res = await fetch('/api/login', {
-      method: 'POST',
-      body: JSON.stringify({ username, password })
-    })
-
-    this.name = username
+  // Здесь this уже shallow reactive модель, 
+  // поэтому this.value2 будет работать как реактивное свойство. 
+  get value2(): number {
+    return this._value2
   }
+  ...
+}
 
-  @action async logout(): Promise<void> {
-    return fetch('/api/logout')
+```
+## Действия и методы 
+
+**Действие** -- это асинхронный метод с декоратором `@action`, который меняет состояние и не возвращает данных.
+
+- **Асинхронный**, потому что сохраняет новое состояние в БД или отправляет на сервер.   
+- **Не возвращает данных**, потому что главное задача - изменить значение свойства модели, а не возвращать данные.  
+- **Декоратор**, чтобы метод стал объектом снаружи модели. Без декоратора это будет обычный метод.
+
+Как работать с действиями внутри классов и снаружи смотрите раздел действия.
+
+## Наблюдатели 
+
+Наблюдателя создает метод `watch` -- это обертка вокруг  vue composition API. Он создаст наблюдатель, привяжет эффект к effect scope модели, сохранит `stop handler` и вернёт его.
+Сохранённый `stop handler` выполнится при уничтожении модели в деструкторе.
+
+<Aside type="caution">
+ не используйте watch или computed напрямую из vue composition api. Это приведет к утечкам памяти. 
+</Aside>
+
+В модели есть 3 объекта для наблюдения:
+- реактивные зависимости,  
+- свойства,
+- динамические модели. 
+
+**Для наблюдения за реактивными зависимостями или свойствами**  вызывайте `watch` в конструкторе. C реактивными зависимостями проблем не будет.  
+
+Со свойствами есть одна сложность: в конструкторе this еще не shallow reactive, поэтому свойства еще не реактивны. Чтобы наблюдатель работал, нужно явно сделать свойство реактивным через vue composition api.
+
+```typescript
+// counter.ts
+import { ref } from 'vue'
+import { ProtoModel, action } from '@vue-modeler/model'
+
+export class Counter extends ProtoModel {
+  protected _count = 0
+  protected _countForWatch = ref(0)
+  
+  constructor(
+    someDependency: OtherReactiveObject,
+    ...
+  ) {
+    super()
+
+    // Этот наблюдатель НЕ РАБОТАЕТ,
+    // потому что this в конструкторе еще не shallow reactive
+    this.watch(
+      () => this._count,
+      () => {
+        console.log('count changed', this._count)
+      }
+    )
+
+    // Этот наблюдатель работает,
+    // потому что this._countForWatch сразу реактивный
+    this.watch(
+      () => this._countForWatch,
+      () => {
+        console.log('countForWatch changed', this._countForWatch.value)
+      }
+    )
+    
+    // Этот наблюдатель работает,
+    // потому что someDependency.someProperty сразу реактивный
+    this.watch(
+      () => someDependency.someProperty,
+      () => {
+        console.log('someDependency.someProperty changed', someDependency.someProperty)
+      }
+    )
   }
+  ...
 }
 ```
 
-## Реактивные свойства
+**Динамические модели** появляются, исчезают, меняются в процессе. Например,  
+репозиторий загружает коллекцию dto, делает из dto коллекцию моделей, и следит за каждой моделью. Если у вас похожий случай, то:
 
-Vue Modeler автоматически делает все свойства модели реактивными:
-
-```typescript
-export class CounterModel extends ProtoModel {
-  count = 0
-  name = 'Counter'
-  items = []
-
-  increment() {
-    this.count++ // Автоматически обновляет UI
-  }
-
-  addItem(item) {
-    this.items.push(item) // Автоматически обновляет UI
-  }
-}
-```
-
-## Вычисляемые свойства
-
-Используйте геттеры для создания вычисляемых свойств:
+1. вызовите `watch` после создания модели,   
+2. сохраните `stop handler`   
+3. вызовите `stop handler` при удалении модели из репозитория.   
+   
+<Aside type="caution">
+ Если просто удалить модель, то наблюдатель останется и будет ссылаться на модель. Сборщик мусора не сможет её удалить. 
+ 
+ Обязательно выполняйте пункты 2 и  3, что бы удалить наблюдатель, иначе будет утечка памяти. 
+</Aside>
 
 ```typescript
-export class TodoModel extends ProtoModel {
-  todos = []
+// counter.ts
+import { ref } from 'vue'
+import { ProtoModel, action } from '@vue-modeler/model'
 
-  get totalTodos() {
-    return this.todos.length
+export class Repository extends ProtoModel {
+  
+  private _models: Set<Model<SomeModel>> = new Set()
+  private _stopWatchers: Map<Model<SomeModel>, WatchStopHandle> = new Map()
+
+  constructor(
+    private fetchDtos: () => Promise<Dto[]>,
+    private modelFactory: (dto: Dto) => Model<SomeModel>,
+  ) {
+    super()
+
+    this.init()
   }
+  ...
 
-  get completedTodos() {
-    return this.todos.filter(todo => todo.completed)
-  }
+  @action async init(): Promise<void> {
+    const dtos = await this.fetchDtos()
+    for (const dto of dtos) {
+      // 1. создаем модель
+      const model = this.modelFactory(dto)
+      // 2. создаем наблюдателя
+      const stopWatcher = this.watch(
+        () => model.property,
+        () => {
+          console.log('model changed', model)
+        }
+      })
 
-  get activeTodos() {
-    return this.todos.filter(todo => !todo.completed)
-  }
-
-  get completionPercentage() {
-    if (this.totalTodos === 0) return 0
-    return Math.round((this.completedTodos.length / this.totalTodos) * 100)
-  }
-}
-```
-
-## Методы модели
-
-### Обычные методы
-
-Обычные методы выполняют синхронные операции:
-
-```typescript
-export class UserModel extends ProtoModel {
-  users = []
-
-  addUser(user) {
-    this.users.push(user)
-  }
-
-  removeUser(id) {
-    this.users = this.users.filter(user => user.id !== id)
-  }
-
-  updateUser(id, updates) {
-    const user = this.users.find(u => u.id === id)
-    if (user) {
-      Object.assign(user, updates)
+      // 3. сохраняем модель
+      this._models.add(model)
+      // 4. сохраняем наблюдателя
+      this._stopWatchers.set(model, stopWatcher)
     }
   }
 
-  findUser(id) {
-    return this.users.find(user => user.id === id)
-  }
-}
-```
-
-### Асинхронные методы
-
-Для асинхронных операций используйте декоратор `@action`:
-
-```typescript
-import { action } from 'vue-modeler/decorator'
-
-export class UserModel extends ProtoModel {
-  users = []
-  loading = false
-
-  @action async fetchUsers() {
-    this.loading = true
-    try {
-      const response = await fetch('/api/users')
-      this.users = await response.json()
-    } catch (error) {
-      console.error('Failed to fetch users:', error)
-    } finally {
-      this.loading = false
+  @action async destroyModel(model: Model<SomeModel>): Promise<void> {
+    // 1. удаляем модель
+    this._models.delete(model)
+   
+    const stopWatcher = this._stopWatchers.get(model)
+    if (stopWatcher) {
+      // 2. останавливаем наблюдение
+      stopWatcher()
     }
+    // 3. удаляем наблюдателя
+    this._stopWatchers.delete(model)
   }
 
-  @action async createUser(userData) {
-    const response = await fetch('/api/users', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(userData)
-    })
-    const newUser = await response.json()
-    this.users.push(newUser)
-  }
-}
-```
-
-## Жизненный цикл модели
-
-### Конструктор
-
-```typescript
-export class UserModel extends ProtoModel {
-  constructor(private apiService: ApiService) {
-    super()
-    // Инициализация модели
-  }
-}
-```
-
-### Деструктор
-
-Модель автоматически очищает ресурсы при уничтожении:
-
-```typescript
-export class UserModel extends ProtoModel {
-  private interval: number
-
-  constructor() {
-    super()
-    // Создание интервала
-    this.interval = setInterval(() => {
-      this.updateData()
-    }, 5000)
-  }
-
-  // Автоматически вызывается при уничтожении модели
   destructor() {
-    // Очистка интервала
-    clearInterval(this.interval)
+    for (const [model, stopWatcher] of this._stopWatchers) {
+      stopWatcher()
+    }
+
+    this._models.clear()
+    this._stopWatchers.clear()
     super.destructor()
   }
 }
 ```
 
-## Наследование моделей
+## Наследование, полиморфизм 
 
-Вы можете создавать иерархию моделей:
+Класс модели -- это стандартный класс, тут работают все подходы ООП. Действия родителей будут работать в потомках.
 
-```typescript
-// Базовый класс
-export abstract class BaseModel extends ProtoModel {
-  loading = false
-  error = null
+## Зависимости
 
-  protected async handleRequest<T>(request: Promise<T>): Promise<T> {
-    this.loading = true
-    this.error = null
-    try {
-      return await request
-    } catch (error) {
-      this.error = error
-      throw error
-    } finally {
-      this.loading = false
-    }
-  }
-}
+Зависимости попадают в модель как аргументы конструктора. Здесь нет ограничений, это могут быть:
+- компоненты инфраструктуры: АПИ сервисы, клиенты к БД  
+- компоненты слоя UI: роутер, настройки UI  
+- другие модели или хранилища: Pinia,  vuex, любые реактивные объекты   
 
-// Специализированная модель
-export class UserModel extends BaseModel {
-  users = []
-
-  @action async fetchUsers() {
-    const users = await this.handleRequest(
-      fetch('/api/users').then(res => res.json())
-    )
-    this.users = users
-  }
-}
-```
-
-## Создание провайдера
-
-Для использования модели в приложении создайте провайдер:
-
-```typescript
-import { model } from 'vue-modeler'
-import { UserModel } from './UserModel'
-
-export const userModelProvider = model(() => new UserModel())
-```
-
-## Использование в компонентах
-
-```vue
-<template>
-  <div>
-    <div v-if="userModel.loading">Загрузка...</div>
-    <div v-else-if="userModel.error">Ошибка: {{ userModel.error.message }}</div>
-    <ul v-else>
-      <li v-for="user in userModel.users" :key="user.id">
-        {{ user.name }}
-      </li>
-    </ul>
-    <button @click="userModel.fetchUsers.exec()">Обновить</button>
-  </div>
-</template>
-
-<script setup lang="ts">
-import { inject } from 'vue'
-import { userModelProvider } from './userProvider'
-
-const userModel = inject(userModelProvider)!
-</script>
-```
-
-## Типизация моделей
-
-### Интерфейсы
-
-```typescript
-interface User {
-  id: number
-  name: string
-  email: string
-  createdAt: Date
-}
-
-interface UserFilters {
-  search?: string
-  role?: string
-  active?: boolean
-}
-
-export class UserModel extends ProtoModel {
-  users: User[] = []
-  filters: UserFilters = {}
-  selectedUser: User | null = null
-
-  @action async fetchUsers(filters?: UserFilters) {
-    // Типизированная логика
-  }
-
-  @action async createUser(userData: Omit<User, 'id' | 'createdAt'>) {
-    // Типизированная логика
-  }
-}
-```
-
-### Дженерики
-
-```typescript
-interface BaseEntity {
-  id: number
-  createdAt: Date
-  updatedAt: Date
-}
-
-export class BaseModel<T extends BaseEntity> extends ProtoModel {
-  items: T[] = []
-  loading = false
-
-  @action async fetchItems(): Promise<T[]> {
-    // Общая логика для всех сущностей
-  }
-
-  @action async createItem(item: Omit<T, 'id' | 'createdAt' | 'updatedAt'>) {
-    // Общая логика создания
-  }
-}
-
-export class UserModel extends BaseModel<User> {
-  // Специфичная для пользователей логика
-}
-```
-
-## Лучшие практики
-
-### 1. Разделение ответственности
-
-```typescript
-// ❌ Плохо - слишком много ответственности
-export class AppModel extends ProtoModel {
-  users = []
-  posts = []
-  comments = []
-  settings = {}
-  // ... много всего
-}
-
-// ✅ Хорошо - разделение на специализированные модели
-export class UserModel extends ProtoModel {
-  users = []
-  // Только логика пользователей
-}
-
-export class PostModel extends ProtoModel {
-  posts = []
-  // Только логика постов
-}
-```
-
-### 2. Иммутабельность
-
-```typescript
-export class TodoModel extends ProtoModel {
-  todos = []
-
-  // ❌ Плохо - мутация объекта
-  updateTodo(id: number, updates: Partial<Todo>) {
-    const todo = this.todos.find(t => t.id === id)
-    if (todo) {
-      Object.assign(todo, updates) // Мутация
-    }
-  }
-
-  // ✅ Хорошо - создание нового объекта
-  updateTodo(id: number, updates: Partial<Todo>) {
-    this.todos = this.todos.map(todo =>
-      todo.id === id ? { ...todo, ...updates } : todo
-    )
-  }
-}
-```
-
-### 3. Нормализация данных
-
-```typescript
-export class UserModel extends ProtoModel {
-  users = {}
-  userIds = []
-
-  @action async fetchUsers() {
-    const users = await api.getUsers()
-    
-    // Нормализация данных
-    this.users = users.reduce((acc, user) => {
-      acc[user.id] = user
-      return acc
-    }, {})
-    
-    this.userIds = users.map(user => user.id)
-  }
-
-  getUser(id: number) {
-    return this.users[id]
-  }
-
-  get usersList() {
-    return this.userIds.map(id => this.users[id])
-  }
-}
-```
-
-### 4. Обработка ошибок
-
-```typescript
-export class UserModel extends ProtoModel {
-  users = []
-  error = null
-
-  @action async fetchUsers() {
-    try {
-      this.error = null
-      const response = await fetch('/api/users')
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-      }
-      
-      this.users = await response.json()
-    } catch (error) {
-      this.error = error
-      console.error('Failed to fetch users:', error)
-    }
-  }
-}
-```
-
-## Следующие шаги
-
-Теперь, когда вы изучили основы моделей, вы можете:
-
-1. [Изучить действия](/guides/actions/)
-2. [Познакомиться с состояниями](/guides/states/)
-3. [Изучить декораторы](/guides/decorators/)
-4. [Посмотреть примеры](/examples/) 
+Модель не умеет внедрять зависимости, за это отвечает контейнер.

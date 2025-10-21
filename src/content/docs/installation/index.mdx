@@ -5,31 +5,65 @@ description: Инструкции по установке и настройке 
 
 import { Tabs, TabItem } from '@astrojs/starlight/components';
 
-**@vue-modeler/model** использует **@vue-modeler/dc** для хранения моделей.
-Поэтому сначала [установите **@vue-modeler/dc**](https://github.com/vue-modeler/dc?tab=readme-ov-file#installation).
-
-**@vue-modeler/model** не требует дополнительных настроек.
-Просто установите пакет.
-
+## Ставим пакеты
 
 <Tabs>
-  <TabItem label="npm">
+  <TabItem label="Vue 3">
     ```bash
-    npm install @vue-modeler/model
+    npm install @vue-modeler/dc@^3.0.0 @vue-modeler/model
     ```
   </TabItem>
-  <TabItem label="yarn">
+  <TabItem label="Vue 2">
     ```bash
-    yarn add @vue-modeler/model
+    npm install @vue-modeler/dc@^2.0.0 @vue-modeler/model
     ```
   </TabItem>
-  <TabItem label="pnpm">
-    ```bash
-    pnpm add @vue-modeler/model
+</Tabs>
+  
+**@vue-modeler/model** не требует дополнительных настроек.
+**@vue-modeler/dc** нужно подключить в приложение.
+
+## Подключаем контейнер
+
+### Нативный Vue проект 
+<Tabs>
+  <TabItem label="Vue 3">
+    ```js
+    import { createApp } from 'vue'
+    import { vueModelerDc } from '@vue-modeler/dc'
+
+    const app = createApp(App)
+    app.use(vueModelerDc)
+    app.mount('#app')
+    ```
+  </TabItem>
+  <TabItem label="Vue 2">
+    ```js
+    import Vue from 'vue'
+    import { vueModelerDc } from '@vue-modeler/dc'
+  
+    Vue.use(vueModelerDc)
+    new Vue({
+      // your app configuration
+    }).$mount('#app')
     ```
   </TabItem>
 </Tabs>
 
+### Nuxt проект
+
+Просто создайте плагин для Nuxt в папке `plugins`
+
+```typescript
+// plugins/vue-modeler-dc.ts
+import { vueModelerDc } from '@vue-modeler/dc'
+
+export default defineNuxtPlugin((nuxtApp) => {
+  nuxtApp.vueApp.use(vueModelerDc)
+})
+```
+
+Всё готово для начала работы!
 
 ## Следующие шаги
 
