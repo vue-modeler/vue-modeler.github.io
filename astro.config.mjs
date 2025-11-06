@@ -31,7 +31,7 @@ export default defineConfig({
 					items: [
 						{ label: 'Контейнер', link: '/guides/container/' },
 						{ label: 'Модель', link: '/guides/models/' },
-						{ label: 'Действия', link: '/guides/actions/' },
+						{ label: 'Действие', link: '/guides/actions/' },
 						{ label: 'Состояния', link: '/guides/states/' },
 						{ label: 'Декораторы', link: '/guides/decorators/' },
 					],
