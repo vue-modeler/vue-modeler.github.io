@@ -9,12 +9,12 @@ import { Aside } from '@astrojs/starlight/components';
 
 В контексте Vue это новый подход к управлению состоянием, поэтому давайте немного поясним:
 
-1. действие объявляется как асинхронный метод класса модели с декоратором `@action`, который меняет состояние модели и не возвращает данные
+1. действие объявляется как асинхронный метод с декоратором `@action`, который меняет состояние модели и не возвращает данные
 2. действие становится объектом поле создания модели.
 3. для выполнения действия используется метод `exec(...)`.
-4. действие меняет своё состояние при выполнении, отслеживает ошибки и сохраняет аргументы последнего вызова.
+4. у действия есть свойства, они меняются при изменении статуса операции.
+5. операция действия может быть отменено или заблокировано.
 5. действие сохраняет контекст модели, которой принадлежит.
-
 
 По свойствам и по поведению Действие похож на шаблон проектирования "Команда".
 
@@ -131,6 +131,28 @@ watch(cart.addProduct.error, (value) => {
 
 Действие-объект берет на себя всё, включая особые случаи. Позволяет разработчику сконцентрироваться на бизнес-логике (п. 2, 3, 4.1), избавляет от когнитивной нагрузки. Код всех операций стандартизирован и не нужно изобретать велосипед.
 
+## API действий
+
+### Свойства 
+
+| Свойство | Тип | Описание |
+|----------|-----|-----------|
+| `isReady` | `boolean` | Действие готово к выполнению |
+| `isPending` | `boolean` | Действие выполняется |
+| `isAbort` | `boolean` | Действие отменено |
+| `isLock` | `boolean` | Действие заблокировано |
+| `error` | `null \| ActionError` | Ошибка выполнения |
+| `args` | `null \| ActionError` | Ошибка выполнения |
+
+#### Методы
+
+| Метод | Описание |
+|----------|-----|-----------|
+| `exec` | Действие готово к выполнению |
+| `abort` | Действие выполняется |
+| `lock` | Действие отменено |
+| `unlock` | Действие заблокировано |
+| `resetError` | Ошибка выполнения |
 
 ## Как использовать действия
 
@@ -266,9 +288,12 @@ if (addProductAction.error) {
 await this.addProduct(productId);
 ```
 
-<Aside type="note">
+<Aside type="caution">
 **Вызов как метода != вызов метода.** Декоратор `@action` подменяет оригинальный метод и "под капотом" получает действие как объект и вызывает метод `exec(...)`. try...catch не будет работать, как ожидается. См. [Обработка ошибок](/guides/actions/#обрабатываем-ошибки).
 </Aside>
+
+Действие асинхронное, поэтому `exec(...)` всегда возвращает `Promise<void>`. Вы не получите  данные, даже если попробуете их вернуть. Это сделано осознанно, потому что действие должно менять состояние модели, а не возвращать данные.
+
 
 ### Следим за состоянием 
 
@@ -297,378 +322,44 @@ await this.addProduct(productId);
 Переходы между состояниями строго определены.
 Попытка выполнить действие в неверном состоянии приведет к ошибке.
 
+По-умолчани. действие 
 ### Обрабатываем ошибки 
 
-Любое действие может завершиться с ошибкой. Метод `exec(...)` перехватывает все ошибки, оборачивает `ActionError` и сохраняет в объекте действия  в свойстве `error`. Рассмотрим 3 случая обработки ошибок:
+Любое действие может завершиться с ошибкой. Метод `exec(...)` перехватывает все ошибки, оборачивает `ActionError` и сохраняет в объекте действия  в свойстве `error`. `ActionError` обеспечивает единообразный интерфейс для обработки ошибок. Свойство `error` доступно только для чтения и реактивно. 
 
-1. Получение оригинальной ошибки 
-2. Проброс ошибки дальше 
-3. Проверка типа ошибки и её обработка
+<Aside type="tip">
+Всегда проверяйте свойство `error` после выполнения действия. try...catch не работает для обработки ошибок.
+</Aside>
 
-
-
-
-### С AbortController
-
-```typescript
-@action async fetchUsers(abortController = new AbortController()): Promise<void> {
-  const response = await fetch('/api/users', {
-    signal: abortController.signal
-  })
-  this.users = await response.json()
-}
-
-// Выполнение с возможностью отмены
-const abortController = new AbortController()
-const promise = userModel.fetchUsers.exec(abortController)
-
-// Отмена действия
-abortController.abort()
-```
-
-## Управление жизненным циклом
-
-### Блокировка действий
+#### Получение оригинальной ошибки
+ 
+Оригинальная ошибка доступна через свойство `error.cause`.
 
 ```typescript
-export class UserModel extends ProtoModel {
-  @action async fetchUsers(): Promise<void> {
-    // Логика загрузки
-  }
 
-  async performComplexOperation() {
-    // Блокируем действие
-    await this.fetchUsers.lock()
-    
-    try {
-      // Выполняем сложную операцию
-      await this.processData()
-    } finally {
-      // Разблокируем действие
-      this.fetchUsers.unlock()
-    }
-  }
-}
+await action.exec()
+
+if (action.error.cause instanceof HttpError) {
+  console.error('HTTP error:', action.error.cause.message)
+} 
+if (action.error.cause instanceof BusinessError) {
+  console.error('Business error:', action.error.cause.message)
+} 
 ```
 
-### Сброс ошибок
+#### Проброс ошибки дальше
+
+Если нужно пробросить ошибку дальше не зависимо от её типа, то это можно сделать вызвав метод `throwError(...)`.
+
+Что бы не делать дополнительные проверки удобно использовать конструкцию 
 
 ```typescript
-export class UserModel extends ProtoModel {
-  @action async fetchUsers(): Promise<void> {
-    // Логика, которая может вызвать ошибку
-  }
-
-  async retryFetch() {
-    // Сбрасываем ошибку
-    this.fetchUsers.resetError()
-    
-    // Повторяем попытку
-    await this.fetchUsers.exec()
-  }
-}
+await action.exec()
+action.error?.cause.throwError()
 ```
+Если ошибка была - она будет проброшена дальше. Если ошибки не было - ничего не произойдет.
 
-### Отмена действий
-
-```typescript
-export class UserModel extends ProtoModel {
-  @action async fetchUsers(abortController = new AbortController()): Promise<void> {
-    const response = await fetch('/api/users', {
-      signal: abortController.signal
-    })
-    this.users = await response.json()
-  }
-
-  async cancelFetch() {
-    // Отменяем действие
-    await this.fetchUsers.abort('User cancelled')
-  }
-}
-```
-
-## Вложенные действия
-
-Действия могут вызывать другие действия:
-
-```typescript
-export class UserModel extends ProtoModel {
-  @action async fetchUsers(): Promise<void> {
-    const response = await fetch('/api/users')
-    this.users = await response.json()
-  }
-
-  @action async fetchUserDetails(userId: number): Promise<void> {
-    const response = await fetch(`/api/users/${userId}/details`)
-    const details = await response.json()
-    // Обработка деталей
-  }
-
-  @action async fetchAllUserData(): Promise<void> {
-    // Сначала загружаем список пользователей
-    await this.fetchUsers()
-    
-    // Затем загружаем детали для каждого пользователя
-    for (const user of this.users) {
-      await this.fetchUserDetails(user.id)
-    }
-  }
-}
-```
-
-## Обработка ошибок
-
-### Автоматическая обработка
-
-```typescript
-export class UserModel extends ProtoModel {
-  @action async fetchUsers(): Promise<void> {
-    try {
-      const response = await fetch('/api/users')
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-      }
-      
-      this.users = await response.json()
-    } catch (error) {
-      // Ошибка автоматически сохраняется в action.error
-      console.error('Failed to fetch users:', error)
-      throw error // Перебрасываем ошибку для обработки в UI
-    }
-  }
-}
-```
-
-### Проверка ошибок в UI
-
-```vue
-<template>
-  <div>
-    <div v-if="userModel.fetchUsers.isError" class="error">
-      Ошибка загрузки: {{ userModel.fetchUsers.error?.message }}
-      <button @click="retryFetch">Повторить</button>
-    </div>
-    
-    <ul v-else>
-      <li v-for="user in userModel.users" :key="user.id">
-        {{ user.name }}
-      </li>
-    </ul>
-  </div>
-</template>
-
-<script setup lang="ts">
-const retryFetch = async () => {
-  userModel.fetchUsers.resetError()
-  await userModel.fetchUsers.exec()
-}
-</script>
-```
-
-## Типизация действий
-
-### С параметрами
-
-```typescript
-interface CreateUserData {
-  name: string
-  email: string
-  role?: string
-}
-
-export class UserModel extends ProtoModel {
-  @action async createUser(userData: CreateUserData): Promise<void> {
-    const response = await fetch('/api/users', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(userData)
-    })
-    const newUser = await response.json()
-    this.users.push(newUser)
-  }
-}
-
-// Использование с типизацией
-await userModel.createUser.exec({
-  name: 'John Doe',
-  email: 'john@example.com',
-  role: 'admin'
-})
-```
-
-### С возвращаемыми значениями
-
-```typescript
-export class UserModel extends ProtoModel {
-  @action async fetchUser(id: number): Promise<User> {
-    const response = await fetch(`/api/users/${id}`)
-    return await response.json()
-  }
-
-  @action async validateEmail(email: string): Promise<boolean> {
-    const response = await fetch('/api/validate-email', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email })
-    })
-    const result = await response.json()
-    return result.isValid
-  }
-}
-```
-
-## Условное выполнение
-
-```typescript
-export class UserModel extends ProtoModel {
-  @action async fetchUsers(): Promise<void> {
-    // Логика загрузки
-  }
-
-  async conditionalFetch() {
-    // Проверяем, не выполняется ли уже действие
-    if (this.fetchUsers.isPending) {
-      console.log('Загрузка уже выполняется')
-      return
-    }
-
-    // Проверяем, есть ли ошибка
-    if (this.fetchUsers.isError) {
-      console.log('Есть ошибка, сбрасываем')
-      this.fetchUsers.resetError()
-    }
-
-    // Выполняем действие
-    await this.fetchUsers.exec()
-  }
-}
-```
-
-## Мониторинг состояний
-
-```typescript
-export class UserModel extends ProtoModel {
-  @action async fetchUsers(): Promise<void> {
-    // Логика загрузки
-  }
-
-  get hasAnyPendingActions(): boolean {
-    return this.hasPendingActions
-  }
-
-  get hasAnyErrors(): boolean {
-    return this.hasActionWithError
-  }
-
-  get pendingActionsCount(): number {
-    // Подсчет выполняющихся действий
-    let count = 0
-    if (this.fetchUsers.isPending) count++
-    // Добавьте другие действия по необходимости
-    return count
-  }
-}
-```
-
-## Лучшие практики
-
-### 1. Именование действий
-
-```typescript
-export class UserModel extends ProtoModel {
-  // ✅ Хорошо - глаголы в инфинитиве
-  @action async fetchUsers(): Promise<void> { }
-  @action async createUser(): Promise<void> { }
-  @action async updateUser(): Promise<void> { }
-  @action async deleteUser(): Promise<void> { }
-
-  // ❌ Плохо - существительные или неясные названия
-  @action async users(): Promise<void> { }
-  @action async data(): Promise<void> { }
-  @action async process(): Promise<void> { }
-}
-```
-
-### 2. Обработка ошибок
-
-```typescript
-export class UserModel extends ProtoModel {
-  @action async fetchUsers(): Promise<void> {
-    try {
-      const response = await fetch('/api/users')
-      
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-      }
-      
-      this.users = await response.json()
-    } catch (error) {
-      // Логируем ошибку
-      console.error('Failed to fetch users:', error)
-      
-      // Можно добавить дополнительную логику
-      if (error instanceof TypeError) {
-        // Ошибка сети
-        throw new Error('Нет подключения к интернету')
-      }
-      
-      throw error
-    }
-  }
-}
-```
-
-### 3. Отмена операций
-
-```typescript
-export class UserModel extends ProtoModel {
-  @action async fetchUsers(abortController = new AbortController()): Promise<void> {
-    try {
-      const response = await fetch('/api/users', {
-        signal: abortController.signal
-      })
-      this.users = await response.json()
-    } catch (error) {
-      if (error.name === 'AbortError') {
-        console.log('Запрос отменен')
-        return
-      }
-      throw error
-    }
-  }
-}
-```
-
-### 4. Блокировка для предотвращения повторных вызовов
-
-```typescript
-export class UserModel extends ProtoModel {
-  @action async submitForm(formData: any): Promise<void> {
-    // Блокируем действие для предотвращения повторной отправки
-    if (this.submitForm.isLock) {
-      console.log('Форма уже отправляется')
-      return
-    }
-
-    await this.submitForm.lock()
-    
-    try {
-      const response = await fetch('/api/submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      })
-      
-      if (!response.ok) {
-        throw new Error('Ошибка отправки формы')
-      }
-    } finally {
-      this.submitForm.unlock()
-    }
-  }
-}
-```
+Действие в состоянии ошибки можно выполнить повторно. Ошибка будет сброшена.
 
 ## Следующие шаги
 
