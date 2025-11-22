@@ -35,6 +35,13 @@ export default defineConfig({
 					],
 				},
 				{
+					label: 'API',
+					items: [
+						{ label: 'Модель', link: '/guides/models/api/' },
+						{ label: 'Действие', link: '/guides/actions/api/' },
+					],
+				},
+				{
 					label: 'Продвинутые темы',
 					items: [
 						{ label: 'Отмена выполнения', link: '/guides/abort/' },

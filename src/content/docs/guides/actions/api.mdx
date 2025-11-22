@@ -1,0 +1,175 @@
+---
+title: API действия
+description: Справочник по методам и свойствам действия
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+## Методы
+
+### `exec(...args)`
+
+Запускает выполнение действия. Аргументы совпадают с сигнатурой исходного метода действия. TypeScript автоматически вычисляет типы аргументов на основе объявления метода.
+
+```typescript
+// Если метод объявлен так:
+@action async addProduct(product: Product, quantity: number): Promise<void> { ... }
+
+// То exec принимает те же аргументы:
+await cart.addProduct.exec(product, 5)
+// ✅ TypeScript проверит типы аргументов
+```
+
+Возвращает `Promise<void>`. Действие не возвращает данные — результат выполнения отражается в изменённом состоянии модели или в свойстве `error`.
+
+### `abort(reason?)`
+
+Отменяет текущее выполнение действия. Если действие не выполняется, вызов игнорируется.
+
+```typescript
+// Отменяем выполнение
+cart.addProduct.abort()
+
+// Можно передать причину отмены
+cart.addProduct.abort('User cancelled')
+```
+
+После отмены действие переходит в состояние `isAbort`. Причину отмены можно получить через свойство `abortReason`.
+
+### `lock()`
+
+Блокирует действие, запрещая запуск через `exec()`. Полезно для предотвращения множественных кликов или параллельных запросов.
+
+```typescript
+cart.addProduct.lock()
+// Теперь exec() выбросит ошибку
+await cart.addProduct.exec(product) // ❌ ActionError
+```
+
+### `unlock()`
+
+Снимает блокировку, возвращая действие в состояние `isReady`.
+
+```typescript
+cart.addProduct.lock()
+cart.addProduct.unlock()
+// Теперь можно выполнить
+await cart.addProduct.exec(product) // ✅
+```
+
+### `resetError()`
+
+Сбрасывает сохранённую ошибку без запуска действия. Действие переходит из состояния `Error` в `Ready`.
+
+```typescript
+if (cart.addProduct.error) {
+  cart.addProduct.resetError()
+  // Теперь можно повторить попытку
+  await cart.addProduct.exec(product)
+}
+```
+
+## Свойства состояния
+
+Эти свойства показывают текущее состояние выполнения действия. Все они реактивны и доступны только для чтения.
+
+### `isReady: boolean`
+
+Действие готово к выполнению. Начальное состояние после создания модели.
+
+```typescript
+if (cart.addProduct.isReady) {
+  await cart.addProduct.exec(product)
+}
+```
+
+### `isPending: boolean`
+
+Действие выполняется в данный момент.
+
+```typescript
+watch(
+  () => cart.addProduct.isPending,
+  (isPending) => {
+    if (isPending) {
+      console.log('Добавление товара...')
+    }
+  }
+)
+```
+
+### `isAbort: boolean`
+
+Действие было отменено через `abort()`.
+
+```typescript
+if (cart.addProduct.isAbort) {
+  console.log('Операция отменена')
+}
+```
+
+### `isLock: boolean`
+
+Действие заблокировано и не может быть запущено.
+
+```typescript
+<button 
+  :disabled="cart.addProduct.isLock"
+  @click="cart.addProduct.exec(product)"
+>
+  Добавить
+</button>
+```
+
+### `error: ActionError | null`
+
+Ошибка выполнения действия. `null`, если ошибки нет.
+
+```typescript
+if (cart.addProduct.error) {
+  console.error(cart.addProduct.error.message)
+  // Доступ к оригинальной ошибке
+  const cause = cart.addProduct.error.cause
+}
+```
+
+## Свойства контекста
+
+Дополнительная информация о текущем выполнении действия. Используются редко, в основном для отладки или продвинутых сценариев.
+
+### `args: unknown[] | null`
+
+Аргументы текущего или последнего вызова `exec()`. Устанавливается при запуске действия.
+
+### `promise: Promise<void> | null`
+
+Promise текущего выполнения. Устанавливается при запуске, обнуляется при завершении.
+
+### `abortController: AbortController | null`
+
+`AbortController` текущей операции. Используется для отмены выполнения. Устанавливается при запуске, обнуляется при завершении.
+
+### `abortReason: unknown | null`
+
+Причина отмены действия. Устанавливается методом `abort()`.
+
+## Переходы между состояниями
+
+Действие может находиться только в одном из состояний. Переходы строго определены:
+
+| Из состояния | Можно перейти в | Условие |
+|--------------|-----------------|---------|
+| `Ready` | `Pending` | Вызов `exec()` |
+| `Ready` | `Lock` | Вызов `lock()` |
+| `Pending` | `Ready` | Успешное завершение |
+| `Pending` | `Error` | Возникла ошибка |
+| `Pending` | `Abort` | Вызов `abort()` |
+| `Pending` | `Lock` | Вызов `lock()` |
+| `Error` | `Ready` | Вызов `resetError()` |
+| `Error` | `Pending` | Повторный вызов `exec()` |
+| `Error` | `Lock` | Вызов `lock()` |
+| `Abort` | `Pending` | Повторный вызов `exec()` |
+| `Lock` | `Ready` | Вызов `unlock()` |
+
+Попытка выполнить действие в неверном состоянии (например, вызвать `exec()` когда `isLock === true`) приведёт к `ActionError`.
+
