@@ -29,26 +29,26 @@ export const useCart = defineStore('cart', () => {
   const isAddingProduct = ref(false)
   const addError = ref<Error | null>(null)
 
-  async addProduct(product: Product): Promise<void> {
+  async function addProduct(product: Product): Promise<void> {
     // Проверяем, что операция не выполняется
-    if (this.isAddingProduct.value) return
+    if (isAddingProduct.value) return
     // Устанавливаем флаг выполнения операции
-    this.isAddingProduct.value = true
+    isAddingProduct.value = true
     // Сбрасываем ошибку
-    this.addError.value = null
+    addError.value = null
     // Выполняем операцию
     try {
       await api.addToCart(product)
       // Сохраняем новое состояние в модели
-      this.items = [...this.items, product]
+      items.value = [...items.value, product]
     } catch (error) {
       // Сохраняем ошибку
-      this.addError.value = error
+      addError.value = error as Error
       // Пробрасываем ошибку дальше
       throw error
     } finally {
       // Сбрасываем флаг выполнения операции
-      this.isAddingProduct.value = false
+      isAddingProduct.value = false
     }
   }
 
@@ -105,7 +105,6 @@ class Cart extends ProtoModel {
     }
 }
 
-const useCart = provider(() => Cart.model(apiService));
 const cart = Cart.model(apiService);
 
 await cart.addProduct.exec(newProduct);
@@ -138,9 +137,11 @@ class CartModel extends ProtoModel {
     }
 }
 
+// Создаем модель
+const cartModel = CartModel.model(apiService)
 
 // Выполняем действие
-cartModel.addProduct.exec(newProduct);
+await cartModel.addProduct.exec(newProduct);
 
 // Следим за статусом выполнения операции
 watch(
@@ -472,15 +473,15 @@ class CartModel extends ProtoModel {
   // ❌ для этого действия abort() не работает, потому что не использует переданный AbortController
   @action async deleteProduct(productId: number): Promise<void> {
     const abortController = new AbortController() // ❌ Неправильно
-    await this.apiService.deleteProduct(product, abortController) // ❌ Неправильно
+    await this.apiService.deleteProduct(productId, abortController) // ❌ Неправильно
   }
 }
 
-const cartModel = new CartModel()
-const cartModel.addProduct.exec(product)
+const cartModel = CartModel.model(apiService)
+await cartModel.addProduct.exec(product)
 
 // Отменяем операцию
-abortController.abort()
+cartModel.addProduct.abort()
 ```
 
 Бывают случаи, когда одно действие вызывает другое, и может быть отменено согласно бизнес логике. Тогда дочернее действие тоже должно быть отменено автоматически.
