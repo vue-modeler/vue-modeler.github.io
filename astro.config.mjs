@@ -44,25 +44,8 @@ export default defineConfig({
 				{
 					label: 'Продвинутые темы',
 					items: [
-						{ label: 'Отмена выполнения', link: '/guides/abort/' },
 						{ label: 'Тестирование', link: '/guides/testing/' },
 						{ label: 'Работа с SSR', link: '/guides/ssr/' },
-					],
-				},
-				{
-					label: 'Примеры',
-					items: [
-						{ label: 'Простой пример', link: '/examples/simple/' },
-						{ label: 'CRUD операции', link: '/examples/crud/' },
-					],
-				},
-				{
-					label: 'Справочник',
-					items: [
-						{ label: 'model', link: '/reference/model/' },
-						{ label: 'ProtoModel', link: '/reference/proto-model/' },
-						{ label: 'Action', link: '/reference/action/' },
-						{ label: '@action', link: '/reference/action-decorator/' },
 					],
 				},
 			],
