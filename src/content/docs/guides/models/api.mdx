@@ -19,8 +19,8 @@ class Counter extends ProtoModel {
 }
 
 // Создаем модель
-const counter = Counter.model(10)
 // ✅ TypeScript проверит типы аргументов
+const counter = Counter.model(10)
 ```
 
 Метод копирует сигнатуру конструктора класса, поэтому проверка типов в TypeScript работает автоматически.
@@ -56,8 +56,8 @@ if (model.hasActionWithError) {
 Создает наблюдатель, привязанный к effect scope модели. Это обертка вокруг `watch` и `watchEffect` из Vue Composition API.
 
 **Сигнатура:**
-- `watch(source, callback, options?)` — наблюдает за источником
-- `watchEffect(effect)` — наблюдает за эффектом
+- `watch(effect: () => void )` — наблюдает за эффектом  
+- `watch(getter: () => unknown , callback: () => void, options?)` — наблюдает за источником
 
 ```typescript
 class Counter extends ProtoModel {
@@ -94,7 +94,7 @@ stopWatcher()
 ```
 
 <Aside type="caution">
-Не используйте `watch` или `watchEffect` напрямую из Vue Composition API внутри модели. Это приведет к утечкам памяти. Всегда используйте `this.watch()`.
+Не используйте напрямую `watch` или `watchEffect` из Vue Composition API внутри модели. Это приведет к утечкам памяти. Всегда используйте `this.watch()`.
 </Aside>
 
 ### `computed<T>(getter: ComputedGetter<T>, debugOptions?): ComputedRef<T>`

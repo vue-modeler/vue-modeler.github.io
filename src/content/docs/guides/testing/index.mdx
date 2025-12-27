@@ -1,0 +1,188 @@
+---
+title: Тестирование
+description: Руководство по тестированию моделей и действий в Vue Modeler
+---
+
+import { Aside } from '@astrojs/starlight/components';
+
+`@vue-modeler/model` позволяет писать меньше кода, это значит нужно меньше тестов. Вам не нужно проверять правильность установки состояний в `action`, если они не используются во внутренней бизнес логике модели. 
+
+## Юнит-тестирование 
+
+- не требует дополнительных инструментов: библиотек, плагинов, и т.п. 
+- не отличается от тестирования экземпляров обычных классов.
+
+Для каждого теста нужно:
+1. Создать моки на зависимости
+2. Создать модель  
+3. Выполнить тест
+
+Основные моменты:
+
+- Модели создаются через статический метод `model`
+- Действия — это объекты класса `Action`, выполняются через `exec()`
+- Если бизнес-логика не завязана на состояние или ошибки `action`, то не нужно проверять правильность установки состояния в `action`
+- Зависимости легко мокать через фабричные функции и внедрять через конструктор модели 
+- модели - реактивные объекты, потому нужно понимать особенности тестирования реактивных объектов 
+
+Следуя этим практикам, вы сможете писать надежные и поддерживаемые тесты для ваших моделей.
+
+## Пример
+
+Для демонстрации возьмем пример близкий к реальности - Корзина товаров.
+Корзина будет максимально простой:
+- работает только для аутентифицированного пользователя
+- хранит только sku без количества
+- автоматически синхронизируется при добавлении или удалении товара  
+```typescript
+// examples/cart.ts
+import { ProtoModel, action } from '@vue-modeler/model'
+import { ShallowReactive } from 'vue'
+
+interface ApiService {
+  fetchAll: () => Promise<string[]>
+  add: (sku: string) => Promise<string[]>
+  remove: (sku: string) => Promise<string[]>
+}
+
+interface User {
+  isLoggedIn: boolean
+}
+
+export class Cart extends ProtoModel {
+  protected _items: Set<string> = new Set()
+
+  constructor(
+    // снаружи класса user может быть моделью.
+    // Так как модель - это ShallowReactive объект, то
+    // он будет совместим с ShallowReactive<User> 
+    private user: ShallowReactive<User> ,
+    private api: ApiService,
+  ) {
+    super()
+
+    this.watch(
+      () => this.user.isLoggedIn,
+      async (isLoggedIn: boolean) => {
+        // если состояние пользователя изменилось,
+        // а действие init всё еще выполнятся - отменяем его 
+        if (this.action(this.init).isPending) {
+          await this.action(this.init).abort()
+        }
+
+        // если user уже вошёл, запускам init и выходим. 
+        // Ждать init не обязательно. Если состояние пользователя измениться,
+        // и init будет выполняться - он отмениться выше  
+        if (isLoggedIn) {
+          this.init()
+
+          return 
+        }
+
+        // user вышел, сбрасываем корзину.  
+        this._items = new Set()
+      },
+      { immediately: true },
+    )
+  }
+
+  get items(): Set<string> {
+    return this._items
+  }
+
+  @action async init(): Promise<void> {
+    const res = await this.api.fetchAll()
+    this._items = new Set(res)
+  }
+  
+
+  @action async add(sku: string): Promise<void> {
+    const res = await this.api.add(sku)
+    this._items = new Set(res)
+  }
+
+  @action async remove(sku: string): Promise<void> {
+    const res = await this.api.remove(sku)
+    this._items = new Set(res)
+  }
+}
+```
+
+Здесь приведем только тест на более сложный случай: создание корзины -> логин пользователя -> разлогин -> повторный  логин.
+
+Полный набор тестов доступен здесь.
+
+
+```typescript
+import { nextTick } from 'vue'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { shallowReactive, ShallowReactive } from 'vue'
+import { Cart } from '../cart'
+import type { Model } from '@vue-modeler/model'
+
+interface ApiService {
+  fetchAll: () => Promise<string[]>
+  add: (sku: string) => Promise<string[]>
+  remove: (sku: string) => Promise<string[]>
+}
+
+interface User {
+  isLoggedIn: boolean
+}
+
+describe('Cart', () => {
+  let apiService: ApiService
+  let user: ShallowReactive<User>
+  let cart: Model<Cart>
+
+  beforeEach(() => {
+    apiService = {
+      fetchAll: vi.fn(),
+      add: vi.fn(),
+      remove: vi.fn(),
+    }
+
+    user = shallowReactive<User>({
+      isLoggedIn: false,
+    })
+
+    cart = Cart.model(user, apiService)
+  })
+  ...
+
+  describe('watch behavior', () => {
+    ...
+  
+    it('watches user login state and re-initializes items when user logs back in after logout', async () => {
+      const firstItems = ['item1', 'item2']
+      const secondItems = ['item3', 'item4', 'item5']
+      
+      vi.mocked(apiService.fetchAll)
+        .mockResolvedValueOnce(firstItems)
+        .mockResolvedValueOnce(secondItems)
+
+      // First login
+      user.isLoggedIn = true
+      await nextTick()
+      expect(cart.items.size).toBe(2)
+
+      // Log out
+      user.isLoggedIn = false
+      await nextTick()
+      expect(cart.items.size).toBe(0)
+
+      // Log in again
+      user.isLoggedIn = true
+      await nextTick()
+      expect(cart.items.size).toBe(3)
+      expect(Array.from(cart.items)).toEqual(secondItems)
+      expect(apiService.fetchAll).toHaveBeenCalledTimes(2)
+    })
+  })
+})
+
+```
+
+
+
+Полный список тестов для такой корзины можно посмотреть здесь.
