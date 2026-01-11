@@ -3,6 +3,8 @@ title: Контейнер зависимостей
 description: Управление зависимостями и жизненным циклом объектов в Vue приложениях
 ---
 
+
+
 **@vue-modeler/dc** — это контейнер зависимостей на основе [shared composable](https://github.com/vuejs/rfcs/blob/master/active-rfcs/0041-reactivity-effect-scope.md#example-a-shared-composable).
 
 Контейнер решает проблему управления жизненным циклом объектов в Vue приложениях:
