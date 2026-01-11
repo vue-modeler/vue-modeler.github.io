@@ -65,14 +65,14 @@ export class Cart extends ProtoModel {
       () => this.user.isLoggedIn,
       async (isLoggedIn: boolean) => {
         // если состояние пользователя изменилось,
-        // а действие init всё еще выполнятся - отменяем его 
+        // а действие init всё еще выполняется - отменяем его 
         if (this.action(this.init).isPending) {
           await this.action(this.init).abort()
         }
 
-        // если user уже вошёл, запускам init и выходим. 
-        // Ждать init не обязательно. Если состояние пользователя измениться,
-        // и init будет выполняться - он отмениться выше  
+        // если user уже вошёл, запускаем init и выходим. 
+        // Ждать init не обязательно. Если состояние пользователя изменится,
+        // и init будет выполняться - он отменится выше  
         if (isLoggedIn) {
           this.init()
 

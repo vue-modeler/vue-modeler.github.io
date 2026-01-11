@@ -110,9 +110,9 @@ onServerPrefetch(async () => model.init.promise)
 import { useSsrState } from '@vue-modeler/dc';
 
 function ssrHydration(ctx: Context): void {
-  // извлекает сервис из контеинера 
+  // извлекает сервис из контейнера 
   const ssrStateService = app.$vueModelerDc.get(useSsrState.asKey).instance;
-  // вставляем состоя ние в контекст
+  // вставляем состояние в контекст
   ctx.state = ssrStateService.injectState(ctx.state);
 }
 ```
