@@ -320,13 +320,13 @@ export class UserModel extends ProtoModel {
         
         // Проверяем тип ошибки
         if (error instanceof TypeError) {
-          // Ошибка сети - ждем дольше
+          // Ошибка сети — ждем дольше
           await new Promise(resolve => setTimeout(resolve, baseDelay * retries * 2))
         } else if (error.message.includes('500')) {
-          // Ошибка сервера - ждем еще дольше
+          // Ошибка сервера — ждем еще дольше
           await new Promise(resolve => setTimeout(resolve, baseDelay * retries * 3))
         } else {
-          // Другие ошибки - не повторяем
+          // Другие ошибки — не повторяем
           throw error
         }
 

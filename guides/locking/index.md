@@ -315,13 +315,13 @@ export class UserModel extends ProtoModel {
     // Блокируем удаление, если есть выполняющиеся операции
     if (this.fetchUsers.isPending) {
       await this.deleteUser.lock()
-      console.log('Удаление заблокировано - идет загрузка')
+      console.log('Удаление заблокировано — идет загрузка')
     }
 
     // Блокируем загрузку, если есть операции удаления
     if (this.deleteUser.isPending) {
       await this.fetchUsers.lock()
-      console.log('Загрузка заблокирована - идет удаление')
+      console.log('Загрузка заблокирована — идет удаление')
     }
   }
 }
@@ -512,7 +512,7 @@ export class UserModel extends ProtoModel {
     // Блокируем создание пользователя во время загрузки
     if (this.fetchUsers.isPending) {
       await this.createUser.lock()
-      console.log('Создание заблокировано - идет загрузка')
+      console.log('Создание заблокировано — идет загрузка')
     }
   }
 }
