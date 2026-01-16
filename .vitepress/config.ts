@@ -3,6 +3,11 @@ import { defineConfig } from 'vitepress'
 export default defineConfig({
   title: 'Vue Modeler',
   description: 'Мощная библиотека для управления состоянием в Vue.js приложениях',
+  
+  head: [
+    ['link', { rel: 'icon', href: '/public/logo.webp', type: 'image/webp' }],
+  ],
+  
   themeConfig: {
     logo: '/public/logo.webp',
     nav: [
