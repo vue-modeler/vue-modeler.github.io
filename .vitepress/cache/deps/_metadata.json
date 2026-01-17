@@ -1,43 +1,43 @@
 {
-  "hash": "9aac6888",
+  "hash": "3f688a5a",
   "configHash": "bdb34763",
-  "lockfileHash": "dea37bdf",
-  "browserHash": "b69c4ab9",
+  "lockfileHash": "d17915cf",
+  "browserHash": "0cf6ff76",
   "optimized": {
     "vue": {
       "src": "../../../node_modules/.pnpm/vue@3.5.26_typescript@5.8.2/node_modules/vue/dist/vue.runtime.esm-bundler.js",
       "file": "vue.js",
-      "fileHash": "9627691a",
+      "fileHash": "bb414162",
       "needsInterop": false
     },
     "vitepress > @vue/devtools-api": {
       "src": "../../../node_modules/.pnpm/@vue+devtools-api@7.7.9/node_modules/@vue/devtools-api/dist/index.js",
       "file": "vitepress___@vue_devtools-api.js",
-      "fileHash": "3fc7ac61",
+      "fileHash": "7aa4f4ce",
       "needsInterop": false
     },
     "vitepress > @vueuse/core": {
       "src": "../../../node_modules/.pnpm/@vueuse+core@12.8.2_typescript@5.8.2/node_modules/@vueuse/core/index.mjs",
       "file": "vitepress___@vueuse_core.js",
-      "fileHash": "e34373fe",
+      "fileHash": "7efd0665",
       "needsInterop": false
     },
     "vitepress > @vueuse/integrations/useFocusTrap": {
       "src": "../../../node_modules/.pnpm/@vueuse+integrations@12.8.2_axios@1.11.0_focus-trap@7.7.0_typescript@5.8.2/node_modules/@vueuse/integrations/useFocusTrap.mjs",
       "file": "vitepress___@vueuse_integrations_useFocusTrap.js",
-      "fileHash": "0ef4a557",
+      "fileHash": "2859e0e3",
       "needsInterop": false
     },
     "vitepress > mark.js/src/vanilla.js": {
       "src": "../../../node_modules/.pnpm/mark.js@8.11.1/node_modules/mark.js/src/vanilla.js",
       "file": "vitepress___mark__js_src_vanilla__js.js",
-      "fileHash": "faa0def9",
+      "fileHash": "c9b87c5b",
       "needsInterop": false
     },
     "vitepress > minisearch": {
       "src": "../../../node_modules/.pnpm/minisearch@7.2.0/node_modules/minisearch/dist/es/index.js",
       "file": "vitepress___minisearch.js",
-      "fileHash": "36b29b98",
+      "fileHash": "b00de2cd",
       "needsInterop": false
     }
   },

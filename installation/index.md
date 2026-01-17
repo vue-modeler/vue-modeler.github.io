@@ -15,8 +15,8 @@ npm install @vue-modeler/dc@^2.0.0 @vue-modeler/model
 ```
 :::
 
-**@vue-modeler/model** не требует дополнительных настроек.
-**@vue-modeler/dc** нужно подключить в приложение.
+**[@vue-modeler/model](https://www.npmjs.com/package/@vue-modeler/model)** не требует дополнительных настроек.
+**[@vue-modeler/dc](https://www.npmjs.com/package/@vue-modeler/dc)** нужно подключить в приложение.
 
 ## Подключаем контейнер
 

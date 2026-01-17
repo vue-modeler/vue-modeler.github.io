@@ -5,7 +5,7 @@ description: Управление зависимостями и жизненны
 
 
 
-**@vue-modeler/dc** — это контейнер зависимостей на основе [shared composable](https://github.com/vuejs/rfcs/blob/master/active-rfcs/0041-reactivity-effect-scope.md#example-a-shared-composable).
+**[@vue-modeler/dc](https://www.npmjs.com/package/@vue-modeler/dc)** — это контейнер зависимостей на основе [shared composable](https://github.com/vuejs/rfcs/blob/master/active-rfcs/0041-reactivity-effect-scope.md#example-a-shared-composable).
 
 Контейнер решает проблему управления жизненным циклом объектов в Vue приложениях:
 - Упрощает совместное использование сервисов между компонентами
@@ -89,7 +89,7 @@ const model = useObject(); // получаем экземпляр
 
 ## Постоянные экземпляры
 
-Бывают случаи, когда нужно создать экземпляр, который будет оставаться в памяти приложения  после использования. Например, сервисы уровня приложения, кэши или менеджеров состояния.
+Бывают случаи, когда нужно создать экземпляр, который будет оставаться в памяти приложения после использования. Например, сервисы уровня приложения, кэши или менеджеры состояния.
 
 Для этого нужно передать опцию `persistentInstance: true` в функцию `provider`.
 

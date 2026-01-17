@@ -149,8 +149,8 @@ if (cart.addProduct.error) {
 
 ```typescript
 <button 
-  :disabled="cart.delIte.iscart.del.isLock"
-  @click="cart.addProduct.exec(product)"
+  :disabled="cart.delete.isLock"
+  @click="cart.delete.exec(productId)"
 >
   Удалить
 </button>
@@ -170,7 +170,7 @@ serverPrefetch(async () => {
 ### `abortController: AbortController | null`
 
 `AbortController` текущей операции. Используется для отмены выполнения. Устанавливается при запуске, обнуляется при завершении.
-Позволяет организовать каскадную отмету действий разных моедлей, если действия зависят между собой.
+Позволяет организовать каскадную отмену действий разных моделей, если действия зависят между собой.
 
 ### `abortReason: unknown | null`
 

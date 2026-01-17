@@ -1,4 +1,5 @@
 import { defineConfig } from 'vitepress'
+import { fmTitlePlugin } from 'vitepress-plugin-frontmatter'
 
 export default defineConfig({
   title: 'Vue Modeler',
@@ -59,12 +60,15 @@ export default defineConfig({
 
     footer: {
       message: 'Released under the MIT License.',
-      copyright: 'Copyright © 2024 Vue Modeler'
+      copyright: 'Copyright © 2024-present Aleksandr Bratko'
     },
   },
 
   markdown: {
-    lineNumbers: true
+    lineNumbers: true,
+    config(md) {
+      md.use(fmTitlePlugin)
+    }
   },
 
   vite: {
