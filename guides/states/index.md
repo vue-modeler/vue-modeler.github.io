@@ -467,12 +467,3 @@ export class UserModel extends ProtoModel {
   }
 }
 ```
-
-## Следующие шаги
-
-Теперь, когда вы изучили состояния, вы можете:
-
-1. [Изучить декораторы](/guides/decorators/)
-2. [Познакомиться с обработкой ошибок](/guides/error-handling/)
-3. [Изучить отмену операций](/guides/abort/)
-4. [Посмотреть примеры](/examples/) 

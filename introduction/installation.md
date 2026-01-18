@@ -6,6 +6,7 @@ description: Инструкции по установке и настройке 
 ## Ставим пакеты
 
 ::: code-group
+
 ```bash [Vue 3]
 npm install @vue-modeler/dc@^3.0.0 @vue-modeler/model
 ```
@@ -13,6 +14,7 @@ npm install @vue-modeler/dc@^3.0.0 @vue-modeler/model
 ```bash [Vue 2]
 npm install @vue-modeler/dc@^2.0.0 @vue-modeler/model
 ```
+
 :::
 
 **[@vue-modeler/model](https://www.npmjs.com/package/@vue-modeler/model)** не требует дополнительных настроек.
@@ -20,9 +22,10 @@ npm install @vue-modeler/dc@^2.0.0 @vue-modeler/model
 
 ## Подключаем контейнер
 
-### Нативный Vue проект 
+### Нативный Vue проект
 
 ::: code-group
+
 ```js [Vue 3]
 import { createApp } from 'vue'
 import { vueModelerDc } from '@vue-modeler/dc'
@@ -41,6 +44,7 @@ new Vue({
   // your app configuration
 }).$mount('#app')
 ```
+
 :::
 
 ### Nuxt проект
@@ -57,12 +61,3 @@ export default defineNuxtPlugin((nuxtApp) => {
 ```
 
 Всё готово для начала работы!
-
-## Следующие шаги
-
-После установки вы можете:
-
-1. [Изучить быстрый старт](/getting-started/)
-2. [Создать первую модель](/guides/models/)
-3. [Познакомиться с действиями](/guides/actions/)
-4. [Изучить примеры](/examples/simple/) 
