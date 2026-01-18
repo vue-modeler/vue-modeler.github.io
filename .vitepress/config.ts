@@ -12,43 +12,61 @@ export default defineConfig({
   themeConfig: {
     logo: '/public/logo.webp',
     nav: [
-      { text: 'Введение', link: '/introduction/' },
-      { text: 'Установка', link: '/installation/' },
-      { text: 'Быстрый старт', link: '/getting-started/' },
+      { text: 'Введение', link: '/introduction/', activeMatch: '/introduction/' },
+      { text: 'Руководство', link: '/guides/' , activeMatch: '/guides/'},
+      { text: 'API', link: '/api/', activeMatch: '/api/' },
+      { text: 'Продвинутые темы', link: '/advanced/testing', activeMatch: '/advanced/' },
     ],
 
-    sidebar: [
-      {
-        text: 'Введение',
-        items: [
-          { text: 'Что такое vue-modeler', link: '/introduction/' },
-          { text: 'Установка', link: '/installation/' },
-          { text: 'Быстрый старт', link: '/getting-started/' },
-        ]
-      },
-      {
-        text: 'Основы',
-        items: [
-          { text: 'Контейнер', link: '/guides/container/' },
-          { text: 'Модель', link: '/guides/models/' },
-          { text: 'Действие', link: '/guides/actions/' },
-        ]
-      },
-      {
-        text: 'API',
-        items: [
-          { text: 'Модель', link: '/guides/models/api/' },
-          { text: 'Действие', link: '/guides/actions/api/' },
-        ]
-      },
-      {
-        text: 'Продвинутые темы',
-        items: [
-          { text: 'Тестирование', link: '/guides/testing/' },
-          { text: 'Работа с SSR', link: '/guides/ssr/' },
-        ]
-      },
-    ],
+    sidebar: {
+      '/api/': [
+        {
+          text: 'API',
+          items: [
+            { text: 'Обзор', link: '/api/' },
+            { text: 'ProtoModel', link: '/api/proto-model' },
+            { text: 'Action', link: '/api/action' },
+            { text: 'ActionError', link: '/api/action-error' },
+          ]
+        },
+      ],
+      '/api': [
+        {
+          text: 'API',
+          items: [
+            { text: 'Обзор', link: '/api/' },
+            { text: 'ProtoModel', link: '/api/proto-model' },
+            { text: 'Action', link: '/api/action' },
+            { text: 'ActionError', link: '/api/action-error' },
+          ]
+        },
+      ],
+      '/': [
+        {
+          text: 'Введение',
+          items: [
+            { text: 'Что такое vue-modeler', link: '/introduction/' },
+            { text: 'Установка', link: '/introduction/installation' },
+            { text: 'Быстрый старт', link: '/introduction/getting-started' },
+          ]
+        },
+        {
+          text: 'Руководства',
+          items: [
+            { text: 'Контейнер зависимостей', link: '/guides/' },
+            { text: 'Модель', link: '/guides/model' },
+            { text: 'Действие', link: '/guides/action' },
+          ]
+        },
+        {
+          text: 'Продвинутые темы',
+          items: [
+            { text: 'Тестирование', link: '/advanced/testing' },
+            { text: 'Работа с SSR', link: '/advanced/ssr' },
+          ]
+        },
+      ],
+    },
 
     socialLinks: [
       { icon: 'github', link: 'https://github.com/vue-modeler' }
