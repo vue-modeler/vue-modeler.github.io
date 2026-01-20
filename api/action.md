@@ -4,121 +4,274 @@ description: Справочник по методам и свойствам де
 outline: deep
 ---
 
-## Action
+# Action
 
 **Файл:** `src/action.ts`
 
 Класс, представляющий действие (декорированный метод) с возможностями управления состоянием.
 
-### Статические свойства
-
-#### `Action.possibleState`
-
-Объект, содержащий все возможные состояния действия:
-
 ```typescript
-{
-  pending: 'pending',
-  error: 'error',
-  lock: 'lock',
-  ready: 'ready',
-  abort: 'abort'
-}
+class Action<T extends object, Args extends any[] = unknown[]>
 ```
 
-#### `Action.actionFlag`
+Дженерики:
 
-Символ, используемый для пометки методов как действий: `Symbol('__action_original_method__')`
+- `T extends object` - Тип модели, которая содержит действие
+- `Args extends any[]` - Тип аргументов метода действия
 
-#### `Action.abortedByLock`
+## Конструктор
 
-Символ, используемый как причина прерывания при блокировке действия: `Symbol('lock')`
+```typescript
+constructor(
+  protected _model: T,
+  protected actionFunction: OriginalMethodWrapper<Args>,
+  protected ownerGetter: () => Model<T>,
+  protected setStateCb: (
+    action: ActionLike<T, Args>,
+    oldState: ActionStateName,
+    newState: ActionStateName,
+  ) => void,
+  protected _validateArgs: (
+    action: ActionLike<T, Args>,
+    ...args: Args
+  ) => Error[],
+)
+```
 
-### Статические методы
-
-#### `Action.create<T, Args>(model, actionFunction, ownerGetter, setStateCb, validateArgs): ActionLike<T, Args>`
-
-Фабричный метод для создания нового экземпляра Action.
+Создаёт новый экземпляр Action. Экземпляр не реактивен. Конструктор не вызывается напрямую. Для создания реактивных экземпляров используется статический метод [`Action.create()`](#actioncreate).
 
 **Параметры:**
 
-- `model` - Экземпляр ProtoModel
-- `actionFunction` - Обёрнутый оригинальный метод
-- `ownerGetter` - Функция, возвращающая экземпляр Model
-- `setStateCb` - Callback для обновления состояния действия в модели
-- `validateArgs` - Функция для валидации аргументов действия
+- `_model` - `T` - Экземпляр модели, содержащий метод действия
+- `actionFunction` - `OriginalMethodWrapper<Args>` - оригинальный метод с флагом `Action.actionFlag`. Флаг устанавливается декоратором `@action`
+- `ownerGetter` - `() => Model<T>` - Функция, возвращающая экземпляр Model, которому принадлежит действие
+- `setStateCb` - `(action, oldState, newState) => void` - Callback для обновления состояния действия в модели при изменении состояния
+- `_validateArgs` - `(action, ...args) => Error[]` - Функция для валидации аргументов действия
 
-**Возвращает:** Реактивный экземпляр ActionLike
+**Выбрасывает:**
 
-### Свойства экземпляра
+- `ActionInternalError` - Если модель не содержит метод с именем из `actionFunction.name`
+- `ActionInternalError` - Если метод не является действием (не имеет флага `Action.actionFlag`)
 
-#### `name: string` (только чтение)
+**Поведение:**
+
+1. Извлекает имя метода из `actionFunction.name`
+2. Проверяет, что модель содержит метод с таким именем
+3. Проверяет, что метод является действием (имеет флаг `Action.actionFlag`)
+4. Сохраняет имя в свойство `name`
+
+## Статические свойства
+
+### `Action.possibleState`
+
+```typescript
+static readonly possibleState: {
+  readonly pending: 'pending'
+  readonly error: 'error'
+  readonly lock: 'lock'
+  readonly ready: 'ready'
+  readonly abort: 'abort'
+}
+```
+
+Объект, содержащий все возможные состояния действия.
+
+**Тип:**
+
+`Readonly<Record<ActionStateName, ActionStateName>>`
+
+## Статические методы
+
+### `Action.create`
+
+```typescript
+static create<T extends ProtoModel, Args extends unknown[] = unknown[]>(
+  model: T,
+  actionFunction: OriginalMethodWrapper<Args>,
+  ownerGetter: () => Model<T>,
+  setStateCb: (
+    action: ActionLike<T, Args>,
+    oldState: ActionStateName,
+    newState: ActionStateName,
+  ) => void,
+  validateArgs: (
+    action: ActionLike<T, Args>,
+    ...args: Args
+  ) => Error[],
+): ActionLike<T, Args>
+```
+
+Фабричный метод для создания нового реактивного экземпляра Action. Внутренне вызывает `constructor` и оборачивает результат в `shallowReactive()` для реактивности.
+
+**Параметры:**
+
+Параметры **полностью совпадают** с параметрами конструктора. См. [Конструктор](#конструктор).
+
+**Возвращает:**
+
+`ActionLike<T, Args>` - Реактивный (shallowReactive) экземпляр Action
+
+**Выбрасывает:**
+
+- `ActionInternalError` - Если модель не содержит метод с именем из `actionFunction` или метод не является действием
+
+## Свойства экземпляра
+
+### `name`
+
+```typescript
+readonly name: string
+```
 
 Имя действия (имя метода).
 
-#### `owner: Model<T>` (только чтение)
+### `owner`
 
-Экземпляр модели, которому принадлежит это действие.
+```typescript
+readonly owner: Model<T>
+```
 
-#### `possibleStates: ActionStateName[]` (только чтение)
+Экземпляр модели, которому принадлежит это действие. Внутри вызывает функцию `ownerGetter`, которая передана в [конструкторе](#конструктор)
 
-Массив всех возможных имён состояний для действий.
+### `state`
 
-#### `state: ActionStateName` (только чтение)
+```typescript
+readonly state: ActionStateName
+```
 
-Текущее состояние действия. Одно из: `'pending'`, `'error'`, `'lock'`, `'ready'`, `'abort'`.
+Текущее состояние действия.
 
-#### `abortController: AbortController | null` (только чтение)
+**Возможные значения:**
 
-Экземпляр AbortController, если действие находится в состоянии pending, иначе `null`.
+`'pending' | 'error' | 'lock' | 'ready' | 'abort'`
 
-#### `args: Args | never[]` (только чтение)
+### `abortController`
+
+```typescript
+readonly abortController: AbortController | null
+```
+
+Экземпляр AbortController для управления прерыванием выполнения действия.
+
+**Значение:**
+
+- `AbortController` - если действие находится в состоянии `pending`
+- `null` - во всех остальных состояниях
+
+### `args`
+
+```typescript
+readonly args: Args | never[]
+```
 
 Аргументы, переданные при последнем выполнении действия.
 
-#### `promise: Promise<void> | null` (только чтение)
+**Значение:**
 
-Промис текущего выполнения, если действие находится в состоянии pending, иначе `null`.
+- `Args` - если действие было выполнено хотя бы раз
+- `never[]` (пустой массив) - если действие ещё не выполнялось
 
-#### `error: ActionError | null` (только чтение)
+### `promise`
 
-Экземпляр ActionError, если действие находится в состоянии error, иначе `null`.
+```typescript
+readonly promise: Promise<void> | null
+```
 
-#### `abortReason: unknown` (только чтение)
+Промис текущего выполнения действия.
 
-Причина прерывания, если действие прервано, иначе `null`.
+**Значение:**
 
-#### `isPending: boolean` (только чтение)
+- `Promise<void>` - если действие находится в состоянии `pending`
+- `null` - во всех остальных состояниях
 
-Возвращает `true`, если действие находится в состоянии pending.
+### `error`
 
-#### `isError: boolean` (только чтение)
+```typescript
+readonly error: ActionError | null
+```
 
-Возвращает `true`, если действие находится в состоянии error.
+Экземпляр [`ActionError`](/api/action-error), содержащий информацию об ошибке выполнения.
 
-#### `isReady: boolean` (только чтение)
+**Значение:**
 
-Возвращает `true`, если действие находится в состоянии ready.
+- [`ActionError`](/api/action-error) - если действие находится в состоянии `error`
+- `null` - во всех остальных состояниях
 
-#### `isLock: boolean` (только чтение)
+### `abortReason`
 
-Возвращает `true`, если действие находится в состоянии lock.
+```typescript
+readonly abortReason: unknown
+```
 
-#### `isAbort: boolean` (только чтение)
+Причина прерывания действия.
 
-Возвращает `true`, если действие находится в состоянии abort.
+**Значение:**
 
-### Методы экземпляра
+- Причина прерывания - если действие находится в состоянии `abort`
+- `null` - во всех остальных состояниях
 
-#### `is(...args: ActionStateName[]): boolean`
+### `isPending`
+
+```typescript
+readonly isPending: boolean
+```
+
+Проверяет, находится ли действие в состоянии `pending`.
+Эквивалентно: `state === 'pending'`.
+
+### `isError`
+
+```typescript
+readonly isError: boolean
+```
+
+Проверяет, находится ли действие в состоянии `error`.
+Эквивалентно: `state === 'error'`.
+
+### `isReady`
+
+```typescript
+readonly isReady: boolean
+```
+
+Проверяет, находится ли действие в состоянии `ready`.
+Эквивалентно: `state === 'ready'`.
+
+### `isLock`
+
+```typescript
+readonly isLock: boolean
+```
+
+Проверяет, находится ли действие в состоянии `lock`.
+Эквивалентно: `state === 'lock'`.
+
+### `isAbort`
+
+```typescript
+readonly isAbort: boolean
+```
+
+Проверяет, находится ли действие в состоянии `abort`.
+Эквивалентно: `state === 'abort'`.
+
+## Методы экземпляра
+
+### `is`
+
+```typescript
+is(...args: ActionStateName[]): boolean
+```
 
 Проверяет, находится ли действие в любом из указанных состояний.
 
 **Параметры:**
 
-- `...args` - Имена состояний для проверки
+- `...args` - `ActionStateName[]` - Имена состояний для проверки
 
-**Возвращает:** `true` если действие находится в любом из указанных состояний
+**Возвращает:**
+
+`boolean` - `true` если действие находится в любом из указанных состояний, иначе `false`
 
 **Пример:**
 
@@ -128,15 +281,23 @@ if (action.is('pending', 'lock')) {
 }
 ```
 
-#### `validate(...args: Args): Error[]`
+### `validate`
 
-Валидирует аргументы действия.
+```typescript
+validate(...args: Args): Error[]
+```
+
+Валидирует аргументы действия. Внутри вызывает функцию `_validateArgs` преданную как аргумент [конструктора](#конструктор). Это самостоятельный метод, не используется в `exec`.
+
+Удобно использовать для проверки пользовательского ввода, что бы получить ошибки без выполнения `exec`. 
 
 **Параметры:**
 
-- `...args` - Аргументы для валидации
+- `...args` - `Args` - Аргументы для валидации
 
-**Возвращает:** Массив ошибок валидации (пустой, если валидно)
+**Возвращает:**
+
+`Error[]` - Массив ошибок валидации. Пустой массив, если все аргументы валидны.
 
 **Пример:**
 
@@ -147,52 +308,81 @@ if (errors.length > 0) {
 }
 ```
 
-#### `exec(...args: Args): Promise<void>`
+### `exec`
 
-Выполняет действие и переводит его в состояние pending.
+```typescript
+exec(...args: Args): Promise<void>
+```
+
+Выполняет действие и переводит его в состояние `pending`. Если метод действия возвращает Promise, ожидает его завершения и обновляет состояние соответственно.
 
 **Параметры:**
 
-- `...args` - Аргументы для передачи в метод действия
-  - Если последний аргумент является `AbortController`, он будет использован
-  - Иначе будет создан новый `AbortController` и добавлен в конец
+- `...args` - `Args` - Аргументы для передачи в метод действия
+  - Если последний аргумент является `AbortController`, он будет использован для управления прерыванием
+  - Иначе будет создан новый `AbortController` и добавлен в конец аргументов
 
-**Возвращает:** Промис, который разрешается при завершении действия
+**Возвращает:**
+
+`Promise<void>` - Промис, который разрешается при успешном завершении действия или отклоняется при ошибке/прерывании.
 
 **Выбрасывает:**
 
-- `ActionStatusConflictError` если действие уже находится в состоянии `lock` или `pending`
-- Различные ошибки, если метод действия выбрасывает исключение (обёрнутое в ActionError)
+- `ActionStatusConflictError` - Если действие уже находится в состоянии `lock` или `pending`
+- `ActionInternalError` - При внутренних ошибках (не перехватывается)
+- `RangeError`, `ReferenceError`, `SyntaxError`, `TypeError`, `URIError`, `EvalError` - Перебрасываются как есть (не перехватываются)
+- `ActionUnexpectedAbortError` - Если действие было прервано, но не находилось в состоянии `pending` или `lock`
 
 **Поведение:**
 
-- Устанавливает состояние действия в `pending` перед выполнением
-- Если метод возвращает не-Promise, немедленно устанавливает состояние в `ready`
-- Если метод возвращает Promise:
-  - При успехе: устанавливает состояние в `ready`
-  - При ошибке: оборачивает ошибку в `ActionError` и устанавливает состояние в `error`
-  - При прерывании: устанавливает состояние в `abort` или `lock` (если прервано блокировкой)
+1. Проверяет, что действие не находится в состоянии `lock` или `pending`
+2. Устанавливает состояние действия в `pending` перед выполнением (для предотвращения рекурсивных вызовов)
+3. Сохраняет аргументы в `_args`
+4. Вызывает оригинальный метод с аргументами (добавляя `AbortController` при необходимости)
+5. Если метод возвращает не-Promise:
+   - Немедленно устанавливает состояние в `ready`
+   - Возвращает разрешённый промис
+6. Если метод возвращает Promise:
+   - При успехе: устанавливает состояние в `ready`
+   - При ошибке: оборачивает ошибку в [`ActionError`](/api/action-error) и устанавливает состояние в `error`
+   - При прерывании: устанавливает состояние в `abort` или `lock` (если прервано блокировкой)
+
+**Важно:** Ошибки выполнения оборачиваются в [`ActionError`](/api/action-error) и сохраняются в состоянии `error`. Внешний `try/catch` не перехватит эти ошибки. Для обработки ошибок используйте проверку `action.error` после ожидания промиса или watcher по состоянию действия.
 
 **Пример:**
 
 ```typescript
 await action.exec('arg1', 'arg2')
-if (action.error) {
-  console.error(action.error.cause)
+if (action.error?.cause) {
+  handleError(action.error.cause)
+  return
 }
+
+// или с watcher:
+watch(
+  () => model.someAction.error,
+  (error) => {
+    if (!error) return
+    handleError(error.cause)
+  }
+)
 ```
 
-#### `abort(reason?: unknown): Promise<void>`
+### `abort`
 
-Прерывает текущее выполнение действия, если оно находится в состоянии pending.
+```typescript
+abort(reason?: unknown): Promise<void>
+```
+
+Прерывает текущее выполнение действия, если оно находится в состоянии `pending`. Если действие не находится в состоянии `pending`, возвращает разрешённый промис без выполнения каких-либо действий.
 
 **Параметры:**
 
-- `reason` - Опциональная причина прерывания
+- `reason` - `unknown` (опционально) - Причина прерывания. Будет доступна через `abortReason`.
 
-**Возвращает:** Промис, который отклоняется с причиной прерывания
+**Возвращает:**
 
-**Примечание:** Возвращает разрешённый промис, если действие не находится в состоянии pending
+`Promise<void>` - Тот же промис, что был возвращён методом `exec()`. Промис будет отклонён с причиной прерывания.
 
 **Пример:**
 
@@ -201,34 +391,50 @@ const promise = action.exec()
 action.abort('Пользователь отменил')
 await promise.catch(() => {
   // Обработать прерывание
+  console.log(action.abortReason) // 'Пользователь отменил'
 })
 ```
 
-#### `lock(): Promise<void>`
+### `lock`
 
-Блокирует действие, предотвращая дальнейшее выполнение. Если действие находится в состоянии pending, оно будет прервано с причиной `Action.abortedByLock`.
+```typescript
+lock(): Promise<void>
+```
 
-**Возвращает:** Промис, который разрешается при применении блокировки
+Блокирует действие, предотвращая дальнейшее выполнение. Если действие находится в состоянии `pending`, оно будет прервано с причиной `Action.abortedByLock`.
+
+**Возвращает:**
+
+`Promise<void>` - Промис, который разрешается при применении блокировки.
 
 **Поведение:**
 
-- Если pending: прерывает с причиной блокировки, затем устанавливает состояние в `lock`
-- Если не pending: немедленно устанавливает состояние в `lock`
+- Если действие в состоянии `pending`: прерывает выполнение с причиной `Action.abortedByLock`, затем устанавливает состояние в `lock`
+- Если действие не в состоянии `pending`: немедленно устанавливает состояние в `lock`
 
 **Пример:**
 
 ```typescript
 await action.lock()
 // Действие теперь заблокировано и не может быть выполнено
+// Попытка вызвать exec() выбросит ActionStatusConflictError
 ```
 
-#### `unlock(): this`
+### `unlock`
 
-Разблокирует действие и устанавливает его в состояние ready.
+```typescript
+unlock(): this
+```
 
-**Возвращает:** Экземпляр действия (для цепочки вызовов)
+Разблокирует действие и устанавливает его в состояние `ready`.
 
-**Выбрасывает:** `ActionStatusConflictError` если действие не находится в состоянии lock
+**Возвращает:**
+
+`this` - Экземпляр действия (для цепочки вызовов).
+
+**Выбрасывает:**
+
+- `ActionStatusConflictError` - Если действие не находится в состоянии `lock`
 
 **Пример:**
 
@@ -237,25 +443,61 @@ action.unlock()
 // Действие теперь готово и может быть выполнено
 ```
 
-#### `resetError(): this`
+### `resetError`
 
-Сбрасывает состояние ошибки и устанавливает действие в состояние ready.
+```typescript
+resetError(): this
+```
 
-**Возвращает:** Экземпляр действия (для цепочки вызовов)
+Сбрасывает состояние ошибки и устанавливает действие в состояние `ready`.
 
-**Выбрасывает:** `ActionStatusConflictError` если действие не находится в состоянии error
+**Возвращает:**
+
+`this` - Экземпляр действия (для цепочки вызовов).
+
+**Выбрасывает:**
+
+- `ActionStatusConflictError` - Если действие не находится в состоянии `error` (т.е. нет ошибки для сброса)
 
 **Пример:**
 
 ```typescript
 if (action.error) {
   action.resetError()
-  // Действие теперь готово
+  // Действие теперь готово и может быть выполнено снова
 }
 ```
 
-#### `toString(): string`
+### `toString`
+
+```typescript
+toString(): string
+```
 
 Возвращает имя действия в виде строки.
 
-**Возвращает:** Имя действия
+**Возвращает:**
+
+`string` - Имя действия (имя метода).
+
+**Пример:**
+
+```typescript
+console.log(action.toString()) // 'someAction'
+console.log(String(action)) // 'someAction'
+```
+
+## Интерфейс ActionLike
+
+```typescript
+interface ActionLike<T extends object, Args extends any[] = unknown[]>
+```
+
+Публичный API интерфейс для экземпляров Action. Описывает только публичный контракт без деталей реализации.
+
+**Типы:**
+
+- `T extends object` - Тип модели
+- `Args extends any[]` - Тип аргументов метода действия
+
+Класс `Action` реализует этот интерфейс, предоставляя все описанные свойства и методы.

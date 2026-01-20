@@ -17,39 +17,46 @@ outline: deep
 
 ## ProtoModel
 
-**Файл:** `src/proto-model.ts`
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin: 1.5rem 0;">
 
-Абстрактный базовый класс для создания реактивных моделей с управлением действиями.
+<div style="border: 1px solid var(--vp-c-divider); border-radius: 8px; padding: 1rem; background: var(--vp-c-bg-soft);">
 
 ### Статические методы
 
-| Метод | Сигнатура |
-|-------|-----------|
-| `createModel` | `ProtoModel.createModel&lt;Target&gt;(protoModel: Target): Model&lt;Target&gt;` |
-| `model` | `ProtoModel.model&lt;T, Args&gt;(...args: Args): Model&lt;T&gt;` |
+- [`createModel`](/api/proto-model#статические-методы)
+- [`model`](/api/proto-model#статические-методы)
+
+</div>
+
+<div style="border: 1px solid var(--vp-c-divider); border-radius: 8px; padding: 1rem; background: var(--vp-c-bg-soft);">
 
 ### Свойства экземпляра
 
-| Свойство | Тип | Описание |
-|----------|-----|----------|
-| `hasPendingActions` | `boolean` | Возвращает `true`, если какое-либо действие в модели находится в состоянии pending |
-| `hasActionWithError` | `boolean` | Возвращает `true`, если какое-либо действие в модели находится в состоянии error |
+- [`hasPendingActions`](/api/proto-model#свойства-экземпляра)
+- [`hasActionWithError`](/api/proto-model#свойства-экземпляра)
+
+</div>
+
+<div style="border: 1px solid var(--vp-c-divider); border-radius: 8px; padding: 1rem; background: var(--vp-c-bg-soft);">
 
 ### Защищённые методы
 
-| Метод | Сигнатура |
-|-------|-----------|
-| `watch` | `watch(...args: unknown[]): WatchStopHandle` |
-| `computed` | `computed&lt;T&gt;(getter: ComputedGetter&lt;T&gt;, debugOptions?: DebuggerOptions): ComputedRef&lt;T&gt;` |
-| `action` | `action(originalMethod: OriginalMethod \| OriginalMethodWrapper): ActionLike&lt;this&gt;` |
-| `setActionState` | `setActionState(action: ActionLike&lt;this&gt;): void` |
+- [`watch`](/api/proto-model#защищённые-методы)
+- [`computed`](/api/proto-model#защищённые-методы)
+- [`action`](/api/proto-model#защищённые-методы)
+- [`setActionState`](/api/proto-model#защищённые-методы)
+
+</div>
+
+<div style="border: 1px solid var(--vp-c-divider); border-radius: 8px; padding: 1rem; background: var(--vp-c-bg-soft);">
 
 ### Публичные методы
 
-| Метод | Сигнатура |
-|-------|-----------|
-| `isModelOf` | `isModelOf&lt;T&gt;(typeModel: ModelConstructor&lt;T&gt;): boolean` |
-| `destructor` | `destructor(): void` |
+- [`destructor`](/api/proto-model#публичные-методы)
+
+</div>
+
+</div>
 
 Полное описание смотрите в разделе [ProtoModel](/api/proto-model).
 
@@ -73,19 +80,19 @@ outline: deep
 
 | Метод | Сигнатура |
 |-------|-----------|
-| `create` | `Action.create&lt;T, Args&gt;(model, actionFunction, ownerGetter, setStateCb, validateArgs): ActionLike&lt;T, Args&gt;` |
+| `create` | ``Action.create<T, Args>(model, actionFunction, ownerGetter, setStateCb, validateArgs): ActionLike<T, Args>`` |
 
 ### Свойства экземпляра
 
 | Свойство | Тип | Описание |
 |----------|-----|----------|
 | `name` | `string` | Имя действия (имя метода) |
-| `owner` | `Model&lt;T&gt;` | Экземпляр модели, которому принадлежит это действие |
+| `owner` | ``Model<T>`` | Экземпляр модели, которому принадлежит это действие |
 | `possibleStates` | `ActionStateName[]` | Массив всех возможных имён состояний для действий |
 | `state` | `ActionStateName` | Текущее состояние действия |
 | `abortController` | `AbortController \| null` | Экземпляр AbortController, если действие находится в состоянии pending |
 | `args` | `Args \| never[]` | Аргументы, переданные при последнем выполнении действия |
-| `promise` | `Promise&lt;void&gt; \| null` | Промис текущего выполнения, если действие находится в состоянии pending |
+| `promise` | ``Promise<void> \| null`` | Промис текущего выполнения, если действие находится в состоянии pending |
 | `error` | `ActionError \| null` | Экземпляр ActionError, если действие находится в состоянии error |
 | `abortReason` | `unknown` | Причина прерывания, если действие прервано |
 | `isPending` | `boolean` | Возвращает `true`, если действие находится в состоянии pending |
@@ -124,12 +131,12 @@ outline: deep
 | Свойство | Тип |
 |----------|-----|
 | `name` | `string` |
-| `owner` | `Model&lt;T&gt;` |
+| `owner` | ``Model<T>`` |
 | `possibleStates` | `ActionStateName[]` |
 | `state` | `ActionStateName` |
 | `abortController` | `null \| AbortController` |
 | `args` | `Args \| never[]` |
-| `promise` | `null \| Promise&lt;void&gt;` |
+| `promise` | ``null \| Promise<void>`` |
 | `error` | `null \| ActionError` |
 | `abortReason` | `unknown` |
 | `isPending` | `boolean` |

@@ -61,6 +61,7 @@ export default defineConfig({
         {
           text: 'Продвинутые темы',
           items: [
+            { text: 'Валидация аргументов', link: '/advanced/args-validation' },
             { text: 'Тестирование', link: '/advanced/testing' },
             { text: 'Работа с SSR', link: '/advanced/ssr' },
           ]

@@ -4,56 +4,82 @@ description: Справочник по методам и свойствам мо
 outline: deep
 ---
 
-## ProtoModel
-
 **Файл:** `src/proto-model.ts`
 
 Абстрактный базовый класс для создания реактивных моделей с управлением действиями.
 
-### Статические методы
+```typescript
+abstract class ProtoModel
+```
 
-#### `ProtoModel.createModel<Target>(protoModel: Target): Model<Target>`
+## Статические методы
 
-Оборачивает экземпляр ProtoModel прокси для обработки геттеров действий и возврата экземпляров Action вместо оригинальных методов.
+### `createModel`
+
+```typescript
+ProtoModel.createModel<Target>(protoModel: Target): Model<Target>
+```
+
+Оборачивает экземпляр ProtoModel в прокси для обработки геттеров действий и возврата экземпляров `Action` вместо оригинальных методов. 
 
 **Параметры:**
 
-- `protoModel` - Экземпляр класса, расширяющего ProtoModel
+- `protoModel` `Target` - Экземпляр класса, расширяющего ProtoModel
 
-**Возвращает:** Экземпляр модели, обёрнутый прокси
+**Возвращает:**
 
-**Выбрасывает:** `TypeError` если аргумент не является экземпляром ProtoModel
+`Model<Target>` Экземпляр модели, обёрнутый прокси
+
+**Выбрасывает:**
+
+`TypeError` если аргумент не является экземпляром ProtoModel
 
 **Пример:**
 
 ```typescript
 class TestModel extends ProtoModel {
-  @action async someAction(): Promise<void> {
-    return Promise.resolve()
+  protected _value = ''
+
+  static customConstructor(value: string): Model<TestModel> {
+    const protoModel = new TestModel()
+    protoModel._value = value 
+
+    return ProtoModel.createModel(protoModel)
   }
 }
 
-const model = ProtoModel.createModel(new TestModel())
-const action = model.someAction // Возвращает экземпляр Action
-model.someAction.exec() // Выполняет действие
-model.someAction.isPending // Возвращает true, если действие в состоянии pending
+const model = TestModel.customConstructor('init value')
 ```
 
-#### `ProtoModel.model<T, Args>(...args: Args): Model<T>`
+### `model`
 
-Статический фабричный метод для создания экземпляра модели. Может быть вызван на классе, расширяющем ProtoModel.
+```typescript
+ProtoModel.model<T, Args>(...args: Args): Model<T>
+```
+
+Статический фабричный метод для создания экземпляра модели. Может быть вызван на классе, расширяющем ProtoModel. Копирует сигнатуру конструктора класса. 
+
 
 **Параметры:**
 
-- `...args` - Аргументы для конструктора модели
+- `...args` `Args` - Аргументы для конструктора модели, совпадают с аргументами конструктора класса.
 
-**Возвращает:** Экземпляр модели
+**Возвращает:**
 
-**Выбрасывает:** `Error` если вызван напрямую на ProtoModel (абстрактный класс)
+`Model<T>` Экземпляр модели
+
+**Выбрасывает:**
+
+`Error` если вызван напрямую на ProtoModel (абстрактный класс)
 
 **Пример:**
 
 ```typescript
+interface Api {
+  fetchUser: () => Promise<void>
+  patch: () => Promise<void>
+}
+
 class UserModel extends ProtoModel {
   constructor(private api: Api) {
     super()
@@ -63,31 +89,47 @@ class UserModel extends ProtoModel {
 const user = UserModel.model({ fetchUser, patch })
 ```
 
-### Свойства экземпляра
+## Свойства экземпляра
 
-#### `hasPendingActions: boolean` (только чтение)
+### `hasPendingActions`
+
+```typescript
+readonly hasPendingActions: boolean
+```
 
 Возвращает `true`, если какое-либо действие в модели находится в состоянии pending.
 
-#### `hasActionWithError: boolean` (только чтение)
+### `hasActionWithError`
+
+```typescript
+readonly hasActionWithError: boolean
+```
 
 Возвращает `true`, если какое-либо действие в модели находится в состоянии error.
 
-### Защищённые методы
+## Защищённые методы
 
-#### `watch(...args: unknown[]): WatchStopHandle`
+### `watch`
 
-Регистрирует наблюдатель в области эффектов модели. Использует функцию `watch` или `watchEffect` из Vue.
+```typescript
+watch(...args: unknown[]): WatchStopHandle
+```
+
+Регистрирует наблюдатель в области эффектов модели. Использует `watch` или `watchEffect` из Vue.
 
 **Параметры:**
 
-- `...args` - Аргументы для функции `watch` или `watchEffect` из Vue
+- `...args` `unknown[]` - Аргументы для `watch` / `watchEffect` из Vue
   - Если один аргумент: обрабатывается как `watchEffect`
   - Если несколько аргументов: обрабатывается как `watch`
 
-**Возвращает:** Функцию для остановки наблюдателя
+**Возвращает:**
 
-**Выбрасывает:** `Error` если аргументы не предоставлены
+`WatchStopHandle` Функцию для остановки наблюдателя
+
+**Выбрасывает:**
+
+`Error` если аргументы не предоставлены
 
 **Ограничения:**
 
@@ -112,16 +154,22 @@ class TestModel extends ProtoModel {
 }
 ```
 
-#### `computed<T>(getter: ComputedGetter<T>, debugOptions?: DebuggerOptions): ComputedRef<T>`
+### `computed`
+
+```typescript
+computed<T>(getter: ComputedGetter<T>, debugOptions?: DebuggerOptions): ComputedRef<T>
+```
 
 Создаёт вычисляемое свойство в области эффектов модели.
 
 **Параметры:**
 
-- `getter` - Функция-геттер для вычисляемого свойства
-- `debugOptions` - Опциональные опции отладки для computed из Vue
+- `getter` `ComputedGetter<T>` - Функция-геттер для вычисляемого свойства
+- `debugOptions` `DebuggerOptions` (опционально) - Опциональные опции отладки для computed из Vue
 
-**Возвращает:** Экземпляр ComputedRef
+**Возвращает:**
+
+`ComputedRef<T>` Экземпляр ComputedRef
 
 **Пример:**
 
@@ -131,29 +179,37 @@ class TestModel extends ProtoModel {
   protected _lastName = ref('Doe')
   
   get fullName() {
-    return this.computed(() => 
+    return this.computed(() =>
       `${this._firstName.value} ${this._lastName.value}`
     )
   }
 }
 ```
 
-#### `action(originalMethod: OriginalMethod | OriginalMethodWrapper): ActionLike<this>`
+### `action`
+
+```typescript
+action(originalMethod: OriginalMethod | OriginalMethodWrapper): ActionLike<this>
+```
 
 Получает экземпляр Action по обёрнутому оригинальному методу или создаёт новый экземпляр Action.
 
 **Параметры:**
 
-- `originalMethod` - Оригинальный метод или обёртка метода с декоратором action
+- `originalMethod` `OriginalMethod | OriginalMethodWrapper` - Оригинальный метод или обёртка метода с декоратором action
 
-**Возвращает:** Экземпляр Action
+**Возвращает:**
 
-**Выбрасывает:** `ActionInternalError` если декоратор action не применён
+`ActionLike<this>` Экземпляр Action
+
+**Выбрасывает:**
+
+`ActionInternalError` если декоратор action не применён
 
 **Использование:**
 
-- **Внешний контекст:** Вызывается неявно при доступе к свойствам действий в модели
-- **Внутренний контекст:** Должен вызываться явно как `this.action(this.someAction)`
+- Внешний контекст: вызывается неявно при доступе к свойствам действий в модели
+- Внутренний контекст: должен вызываться явно как `this.action(this.someAction)`
 
 **Пример:**
 
@@ -176,36 +232,28 @@ const model = TestModel.model()
 model.testAction.exec() // Действие доступно напрямую
 ```
 
-#### `setActionState(action: ActionLike<this>): void`
+### `setActionState`
+
+```typescript
+setActionState(action: ActionLike<this>): void
+```
 
 Обновляет отслеживание состояния действия в модели. Это публичный метод в контексте ProtoModel, но защищённый в контексте Model.
 
 **Параметры:**
 
-- `action` - Экземпляр действия, для которого нужно обновить состояние
+- `action` `ActionLike<this>` - Экземпляр действия, для которого нужно обновить состояние
 
-**Выбрасывает:** `Error` если действие не найдено
+**Выбрасывает:**
 
-### Публичные методы
+`Error` если действие не найдено
 
-#### `isModelOf<T>(typeModel: ModelConstructor<T>): boolean`
+## Публичные методы
 
-Проверяет, является ли экземпляр модели определённого типа.
-
-**Параметры:**
-
-- `typeModel` - Конструктор типа модели для проверки
-
-**Возвращает:** `true` если модель является экземпляром указанного типа
-
-**Пример:**
+### `destructor`
 
 ```typescript
-if (model.isModelOf(UserModel)) {
-  // model является UserModel
-}
+destructor(): void
 ```
-
-#### `destructor(): void`
 
 Очищает модель, останавливая все наблюдатели и область эффектов. Должен вызываться, когда модель больше не нужна, чтобы предотвратить утечки памяти.
