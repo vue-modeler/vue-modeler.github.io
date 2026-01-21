@@ -248,7 +248,94 @@ setActionState(action: ActionLike<this>): void
 
 `Error` если действие не найдено
 
+### `validateArgs`
+
+```typescript
+protected validateArgs(action: ActionLike<this>, ...args: unknown[]): Error[]
+```
+
+Валидирует аргументы действия перед его выполнением. Может быть переопределён в дочерних классах для добавления пользовательской валидации.
+
+Передается в конструктор действия. Разработчик вызывает валидацию через действие. Этим проверяется валидность аргументов действия в контексте общего состояния модели.  
+
+Подробнее в разделе [Валидация аргументов](/advanced/args-validation.md)
+
+**Параметры:**
+
+- `action` `ActionLike<this>` - Экземпляр ддействия, для которого выполняется валидация
+- `...args` `unknown[]` - Аргументы, переданные действию
+
+**Возвращает:**
+
+`Error[]` Массив ошибок валидации. Пустой массив означает, что валидация прошла успешно.
+
+**По умолчанию:**
+
+Возвращает массив с одной ошибкой, указывающей, что метод не реализован.
+
+**Пример:**
+
+```typescript
+class CounterModel extends ProtoModel {
+  @action async increment(value: number): Promise<void> {
+    // ...
+  }
+
+  protected validateArgs(action: ActionLike<this>, ...args: unknown[]): Error[] {
+    const errors: Error[] = []
+    
+    if (action === this.action(this.increment)) {
+      const value = args[0] as number
+      
+      if (typeof value !== 'number') {
+        errors.push(new Error('Value must be a number'))
+      } else if (value < 0) {
+        errors.push(new Error('Value must be positive'))
+      } else if (value > 100) {
+        errors.push(new Error('Value must not exceed 100'))
+      }
+    }
+    
+    return errors
+  }
+}
+```
+
 ## Публичные методы
+
+### `isModelOf`
+
+```typescript
+isModelOf<T extends ProtoModel>(typeModel: ModelConstructor<T>): boolean
+```
+
+Проверяет, является ли текущая модель экземпляром указанного типа модели.
+
+**Параметры:**
+
+- `typeModel` `ModelConstructor<T>` - Конструктор класса модели для проверки
+
+**Возвращает:**
+
+`boolean` `true`, если модель является экземпляром указанного типа, иначе `false`
+
+**Пример:**
+
+```typescript
+class UserModel extends ProtoModel {
+  // ...
+}
+
+class ProductModel extends ProtoModel {
+  // ...
+}
+
+const user = UserModel.model()
+
+console.log(user.isModelOf(UserModel))    // true
+console.log(user.isModelOf(ProductModel))  // false
+console.log(user instanceof UserModel)    // true (альтернативный способ)
+```
 
 ### `destructor`
 
