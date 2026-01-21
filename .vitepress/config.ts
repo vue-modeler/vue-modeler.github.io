@@ -27,6 +27,7 @@ export default defineConfig({
             { text: 'ProtoModel', link: '/api/proto-model' },
             { text: 'Action', link: '/api/action' },
             { text: 'ActionError', link: '/api/action-error' },
+            { text: 'Interfaces', link: '/api/interfaces' },
           ]
         },
       ],
@@ -38,6 +39,7 @@ export default defineConfig({
             { text: 'ProtoModel', link: '/api/proto-model' },
             { text: 'Action', link: '/api/action' },
             { text: 'ActionError', link: '/api/action-error' },
+            { text: 'Interfaces', link: '/api/interfaces' },
           ]
         },
       ],

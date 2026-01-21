@@ -6,57 +6,40 @@ outline: deep
 
 Этот документ описывает публичный API основных классов и интерфейсов [@vue-modeler/model](https://www.npmjs.com/package/@vue-modeler/model).
 
-## Содержание
-
-- [ProtoModel](/api/proto-model)
-- [Action](/api/action)
-- [ActionLike](#actionlike)
-- [ActionError](/api/action-error)
-
----
-
 ## ProtoModel
 
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin: 1.5rem 0;">
-
-<div style="border: 1px solid var(--vp-c-divider); border-radius: 8px; padding: 1rem; background: var(--vp-c-bg-soft);">
+Абстрактный базовый класс для создания реактивных моделей с управлением действиями.
 
 ### Статические методы
 
-- [`createModel`](/api/proto-model#статические-методы)
-- [`model`](/api/proto-model#статические-методы)
+| Метод | Описание |
+|-------|----------|
+| [`createModel`](/api/proto-model#createmodel) | Оборачивает `ProtoModel` в `Model<T>` (proxy) для доступа к `@action` как к `Action` |
+| [`model`](/api/proto-model#model) | Фабрика для создания `Model<T>` с сигнатурой конструктора класса |
 
-</div>
+### Свойства экземпляра (ProtoModel)
 
-<div style="border: 1px solid var(--vp-c-divider); border-radius: 8px; padding: 1rem; background: var(--vp-c-bg-soft);">
+| Свойство | Тип | Описание |
+|----------|-----|----------|
+| [`hasPendingActions`](/api/proto-model#haspendingactions) | `boolean` | Есть ли в модели действия в состоянии `pending` |
+| [`hasActionWithError`](/api/proto-model#hasactionwitherror) | `boolean` | Есть ли в модели действия в состоянии `error` |
 
-### Свойства экземпляра
+### Защищённые методы (ProtoModel)
 
-- [`hasPendingActions`](/api/proto-model#свойства-экземпляра)
-- [`hasActionWithError`](/api/proto-model#свойства-экземпляра)
+| Метод | Описание |
+|-------|----------|
+| [`watch`](/api/proto-model#watch) | Регистрирует `watch`/`watchEffect` в локальном `EffectScope` модели |
+| [`computed`](/api/proto-model#computed) | Создаёт `computed` в локальном `EffectScope` модели |
+| [`action`](/api/proto-model#action) | Возвращает `Action` для метода с `@action` (создаёт при первом обращении) |
+| [`setActionState`](/api/proto-model#setactionstate) | Обновляет агрегированное состояние действий модели |
+| [`validateArgs`](/api/proto-model#validateargs) | Пользовательская валидация аргументов действий (переопределяется в модели) |
 
-</div>
+### Публичные методы (ProtoModel)
 
-<div style="border: 1px solid var(--vp-c-divider); border-radius: 8px; padding: 1rem; background: var(--vp-c-bg-soft);">
-
-### Защищённые методы
-
-- [`watch`](/api/proto-model#защищённые-методы)
-- [`computed`](/api/proto-model#защищённые-методы)
-- [`action`](/api/proto-model#защищённые-методы)
-- [`setActionState`](/api/proto-model#защищённые-методы)
-
-</div>
-
-<div style="border: 1px solid var(--vp-c-divider); border-radius: 8px; padding: 1rem; background: var(--vp-c-bg-soft);">
-
-### Публичные методы
-
-- [`destructor`](/api/proto-model#публичные-методы)
-
-</div>
-
-</div>
+| Метод | Описание |
+|-------|----------|
+| [`isModelOf`](/api/proto-model#ismodelof) | Проверка типа модели через `instanceof` |
+| [`destructor`](/api/proto-model#destructor) | Останавливает watchers и `EffectScope` модели |
 
 Полное описание смотрите в разделе [ProtoModel](/api/proto-model).
 
@@ -64,55 +47,53 @@ outline: deep
 
 ## Action
 
-**Файл:** `src/action.ts`
-
 Класс, представляющий действие (декорированный метод) с возможностями управления состоянием.
 
-### Статические свойства
+### Статические свойства (Action)
 
 | Свойство | Тип | Описание |
 |----------|-----|----------|
-| `possibleState` | `object` | Объект, содержащий все возможные состояния действия |
-| `actionFlag` | `Symbol` | Символ, используемый для пометки методов как действий |
-| `abortedByLock` | `Symbol` | Символ, используемый как причина прерывания при блокировке действия |
+| [`possibleState`](/api/action#actionpossiblestate) | `object` | Все возможные состояния действия |
+| [`actionFlag`](/api/action#статические-свойства) | `Symbol` | Флаг, которым декоратор `@action` помечает методы |
+| [`abortedByLock`](/api/action#статические-свойства) | `Symbol` | Маркер причины abort при `lock` |
 
-### Статические методы
+### Статические методы (Action)
 
-| Метод | Сигнатура |
-|-------|-----------|
-| `create` | ``Action.create<T, Args>(model, actionFunction, ownerGetter, setStateCb, validateArgs): ActionLike<T, Args>`` |
+| Метод | Описание |
+|-------|----------|
+| [`create`](/api/action#actioncreate) | Фабрика реактивного (`shallowReactive`) экземпляра `Action` |
 
-### Свойства экземпляра
+### Свойства экземпляра (Action)
 
 | Свойство | Тип | Описание |
 |----------|-----|----------|
-| `name` | `string` | Имя действия (имя метода) |
-| `owner` | ``Model<T>`` | Экземпляр модели, которому принадлежит это действие |
-| `possibleStates` | `ActionStateName[]` | Массив всех возможных имён состояний для действий |
-| `state` | `ActionStateName` | Текущее состояние действия |
-| `abortController` | `AbortController \| null` | Экземпляр AbortController, если действие находится в состоянии pending |
-| `args` | `Args \| never[]` | Аргументы, переданные при последнем выполнении действия |
-| `promise` | ``Promise<void> \| null`` | Промис текущего выполнения, если действие находится в состоянии pending |
-| `error` | `ActionError \| null` | Экземпляр ActionError, если действие находится в состоянии error |
-| `abortReason` | `unknown` | Причина прерывания, если действие прервано |
-| `isPending` | `boolean` | Возвращает `true`, если действие находится в состоянии pending |
-| `isError` | `boolean` | Возвращает `true`, если действие находится в состоянии error |
-| `isReady` | `boolean` | Возвращает `true`, если действие находится в состоянии ready |
-| `isLock` | `boolean` | Возвращает `true`, если действие находится в состоянии lock |
-| `isAbort` | `boolean` | Возвращает `true`, если действие находится в состоянии abort |
+| [`name`](/api/action#name) | `string` | Имя действия (имя метода) |
+| [`owner`](/api/action#owner) | ``Model<T>`` | Владелец действия (модель) |
+| [`possibleStates`](/api/action#свойства-экземпляра) | `ActionStateName[]` | Все возможные состояния |
+| [`state`](/api/action#state) | `ActionStateName` | Текущее состояние |
+| [`abortController`](/api/action#abortcontroller) | `AbortController \| null` | AbortController, если действие `pending` |
+| [`args`](/api/action#args) | `Args \| never[]` | Аргументы последнего запуска |
+| [`promise`](/api/action#promise) | ``Promise<void> \| null`` | Promise текущего запуска (`pending`) |
+| [`error`](/api/action#error) | `ActionError \| null` | Ошибка выполнения (`error`) |
+| [`abortReason`](/api/action#abortreason) | `unknown` | Причина abort |
+| [`isPending`](/api/action#ispending) | `boolean` | `state === 'pending'` |
+| [`isError`](/api/action#iserror) | `boolean` | `state === 'error'` |
+| [`isReady`](/api/action#isready) | `boolean` | `state === 'ready'` |
+| [`isLock`](/api/action#islock) | `boolean` | `state === 'lock'` |
+| [`isAbort`](/api/action#isabort) | `boolean` | `state === 'abort'` |
 
-### Методы экземпляра
+### Методы экземпляра (Action)
 
-| Метод | Сигнатура |
-|-------|-----------|
-| `is` | `is(...args: ActionStateName[]): boolean` |
-| `validate` | `validate(...args: Args): Error[]` |
-| `exec` | `exec(...args: Args): Promise&lt;void&gt;` |
-| `abort` | `abort(reason?: unknown): Promise&lt;void&gt;` |
-| `lock` | `lock(): Promise&lt;void&gt;` |
-| `unlock` | `unlock(): this` |
-| `resetError` | `resetError(): this` |
-| `toString` | `toString(): string` |
+| Метод | Описание |
+|-------|----------|
+| [`is`](/api/action#is) | Проверяет состояние(я) действия |
+| [`validate`](/api/action#validate) | Запускает валидацию аргументов |
+| [`exec`](/api/action#exec) | Выполняет действие |
+| [`abort`](/api/action#abort) | Прерывает выполнение |
+| [`lock`](/api/action#lock) | Блокирует выполнение |
+| [`unlock`](/api/action#unlock) | Снимает блокировку |
+| [`resetError`](/api/action#reseterror) | Сбрасывает ошибку |
+| [`toString`](/api/action#tostring) | Строковое представление |
 
 Полное описание смотрите в разделе [Action](/api/action).
 
@@ -120,72 +101,34 @@ outline: deep
 
 ## ActionLike
 
-**Файл:** `src/action.ts`
+Интерфейс, описывающий публичный контракт для экземпляров `Action` без деталей реализации.
 
-Интерфейс, описывающий публичный контракт для экземпляров Action без деталей реализации.
-
-### Свойства
-
-Все свойства доступны только для чтения и соответствуют свойствам класса Action:
-
-| Свойство | Тип |
-|----------|-----|
-| `name` | `string` |
-| `owner` | ``Model<T>`` |
-| `possibleStates` | `ActionStateName[]` |
-| `state` | `ActionStateName` |
-| `abortController` | `null \| AbortController` |
-| `args` | `Args \| never[]` |
-| `promise` | ``null \| Promise<void>`` |
-| `error` | `null \| ActionError` |
-| `abortReason` | `unknown` |
-| `isPending` | `boolean` |
-| `isError` | `boolean` |
-| `isReady` | `boolean` |
-| `isLock` | `boolean` |
-| `isAbort` | `boolean` |
-
-### Методы
-
-Все методы соответствуют публичным методам класса Action:
-
-| Метод | Сигнатура |
-|-------|-----------|
-| `is` | `is(...args: ActionStateName[]): boolean` |
-| `validate` | `validate(...args: Args): Error[]` |
-| `exec` | `exec(...args: Args): Promise&lt;void&gt;` |
-| `abort` | `abort(reason?: unknown): Promise&lt;void&gt;` |
-| `lock` | `lock(): Promise&lt;void&gt;` |
-| `unlock` | `unlock(): this` |
-| `resetError` | `resetError(): this` |
-| `toString` | `toString(): string` |
+Полное описание смотрите в разделе [Interfaces](/api/interfaces#actionlike).
 
 ---
 
 ## ActionError
 
-**Файл:** `src/error/action-error.ts`
-
 Класс ошибки, представляющий исключение, произошедшее во время выполнения действия. Это исключение, которое должно быть обработано и отображено пользователю в пользовательском интерфейсе.
 
-### Конструктор
+### Конструктор (ActionError)
 
-| Конструктор | Сигнатура |
-|-------------|-----------|
-| `new ActionError` | `new ActionError(actionName: string, options: { cause: Error })` |
+| Конструктор | Описание |
+|-------------|----------|
+| [`new ActionError(...)`](/api/action-error#конструктор) | Ошибка, возникающая при выполнении действия (`Action.error`) |
 
-### Свойства экземпляра
+### Свойства экземпляра (ActionError)
 
 | Свойство | Тип | Описание |
 |----------|-----|----------|
-| `cause` | `Error` | Оригинальная ошибка, вызвавшая этот ActionError |
+| [`cause`](/api/action-error#cause-error-только-чтение) | `Error` | Оригинальная ошибка-причина |
 
-### Методы экземпляра
+### Методы экземпляра (ActionError)
 
-| Метод | Сигнатура |
-|-------|-----------|
-| `throwCause` | `throwCause(): void` |
-| `toString` | `toString(): string` |
+| Метод | Описание |
+|-------|----------|
+| [`throwCause`](/api/action-error#throwcause-void) | Выбрасывает оригинальную ошибку-причину |
+| [`toString`](/api/action-error#tostring-string) | Возвращает сообщение из ошибки-причины |
 
 Полное описание смотрите в разделе [ActionError](/api/action-error).
 
@@ -193,27 +136,15 @@ outline: deep
 
 ## Определения типов
 
-### ActionStateName
+Вспомогательные типы, используемые в публичном API моделей и действий.
 
-```typescript
-type ActionStateName = 'pending' | 'error' | 'lock' | 'ready' | 'abort'
-```
-
-### Model&lt;T&gt;
-
-Тип, представляющий экземпляр модели, обёрнутый прокси. Предоставляет доступ к действиям как к экземплярам Action вместо методов.
-
-### OriginalMethod
-
-Тип, представляющий оригинальный метод до применения декоратора action.
-
-### OriginalMethodWrapper
-
-Тип, представляющий метод после применения декоратора action.
+Полное описание смотрите в разделе [Interfaces](/api/interfaces#определения-типов).
 
 ---
 
 ## Типы ошибок
+
+Ошибки, связанные с некорректным жизненным циклом и состояниями действий.
 
 | Тип ошибки | Описание |
 |------------|----------|
@@ -221,9 +152,13 @@ type ActionStateName = 'pending' | 'error' | 'lock' | 'ready' | 'abort'
 | `ActionUnexpectedAbortError` | Выбрасывается, когда происходит ошибка прерывания, но действие не находится в состоянии pending или lock |
 | `ActionInternalError` | Внутренняя ошибка, указывающая на проблему с настройкой или использованием действия (например, декоратор action не применён) |
 
+Полное описание смотрите в разделе [Action](/api/action).
+
 ---
 
 ## Примечания
+
+**См. также:** [Руководство по действиям](/guides/action) и [Обработка ошибок](/guides/error-handling/).
 
 1. **Управление состоянием действий**: Действия автоматически управляют своим состоянием. Вам не нужно вручную отслеживать флаги типа `isLoading` или подобные.
 
