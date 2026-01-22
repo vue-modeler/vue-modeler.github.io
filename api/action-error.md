@@ -4,13 +4,15 @@ description: Справочник по классу ошибки ActionError
 outline: deep
 ---
 
-## ActionError
+Класс ошибки, представляющий исключение, произошедшее во время выполнения действия. Сохраняется в свойстве экземпляра [`Action.error`](/api/action#error)
 
-Класс ошибки, представляющий исключение, произошедшее во время выполнения действия. Это исключение, которое должно быть обработано и отображено пользователю в слое UI.
+::: tip
+ Это исключение, которое должно быть обработано и отображено пользователю в слое UI.
+:::
 
-### Конструктор
+## Конструктор
 
-#### `new ActionError(actionName: string, options: { cause: Error })`
+### `new ActionError(actionName: string, options: { cause: Error })`
 
 Создаёт новый экземпляр ActionError.
 
@@ -24,15 +26,15 @@ outline: deep
 - `name: string` - Всегда `'ActionError'`
 - `message: string` - Сообщение из ошибки-причины
 
-### Свойства экземпляра
+## Свойства экземпляра
 
-#### `cause: Error` (только чтение)
+### `cause: Error` (только чтение)
 
 Оригинальная ошибка, вызвавшая этот ActionError.
 
-### Методы экземпляра
+## Методы экземпляра
 
-#### `throwCause(): void`
+### `throwCause(): void`
 
 Выбрасывает оригинальную ошибку-причину.
 
@@ -50,7 +52,7 @@ if (action.error) {
 
 **Возвращает:** Строка сообщения об ошибке
 
-### Пример использования
+## Пример использования
 
 ```typescript
 @action async fetchUser(): Promise<void> {
@@ -71,3 +73,7 @@ if (model.fetchUser.error) {
   model.fetchUser.error.throwCause()
 }
 ```
+
+---
+
+См. также: [Action](/api/action) и [Внутренние ошибки](/api/action-internal-errors).

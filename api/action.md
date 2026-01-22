@@ -487,4 +487,4 @@ console.log(String(action)) // 'someAction'
 
 ## Интерфейсы
 
-Интерфейс `ActionLike` (публичный контракт `Action`) вынесен в отдельный справочник: [Interfaces](/api/interfaces#actionlike).
+Интерфейс `ActionLike` (публичный контракт `Action`) вынесен в отдельный справочник: [Интерфейсы и типы](/api/interfaces#actionlike).
