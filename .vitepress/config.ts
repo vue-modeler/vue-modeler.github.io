@@ -5,11 +5,11 @@ export default defineConfig({
   title: 'Vue Modeler',
   description: 'Мощная библиотека для управления состоянием в Vue.js приложениях',
   
-  // Базовый URL для деплоя (раскомментируйте и укажите свой домен при необходимости)
-  // base: '/vue-modeler/',
+  // Базовый URL для деплоя на GitHub Pages
+  base: '/docs/',
   
   head: [
-    ['link', { rel: 'icon', href: '/public/logo.webp', type: 'image/webp' }],
+    ['link', { rel: 'icon', href: '/logo.webp', type: 'image/webp' }],
     
     // Аналитика (раскомментируйте нужный вариант)
     
@@ -27,7 +27,7 @@ export default defineConfig({
   ],
   
   themeConfig: {
-    logo: '/public/logo.webp',
+    logo: '/logo.webp',
     nav: [
       { text: 'Введение', link: '/introduction/', activeMatch: '/introduction/' },
       { text: 'Руководство', link: '/guides/' , activeMatch: '/guides/'},
