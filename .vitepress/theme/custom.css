@@ -1,0 +1,46 @@
+:root {
+  --vp-c-indigo-1: #3A00A8;
+  --vp-c-indigo-2: #7C4DFF;
+  --vp-c-indigo-3: #5803E9;
+
+  --vp-home-hero-name-color: transparent;
+  --vp-home-hero-name-background: -webkit-linear-gradient(
+    45deg,
+    #3A00A8,
+    #5803E9,
+    #8E37C7,
+    #FF8080
+  );
+
+  --vp-home-hero-image-background-image: url("/public/logo.webp");
+}
+
+.dark {
+  --vp-c-indigo-2: #b097ff;
+  --vp-c-indigo-1: #9e7aff;
+  --vp-c-indigo-3: #7E57C2;
+
+  --vp-home-hero-name-background: -webkit-linear-gradient(
+    45deg,
+    #5803E9,
+    #8E37C7,
+    #FF8080
+  );
+}
+
+.dark .VPHomeHero .image-bg {
+  filter: blur(52px);
+}
+
+.VPHomeHero .image-bg {
+  filter: blur(32px) opacity(0.5);
+  background-size: cover;
+  background-position: center;
+  border-radius: 0 !important;
+}
+
+.VPNavBarTitle .title > span {
+  background: var(--vp-home-hero-name-background);
+  background-clip: text;
+  -webkit-text-fill-color: var(--vp-home-hero-name-color);
+}
