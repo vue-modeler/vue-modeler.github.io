@@ -11,16 +11,17 @@ export default defineConfig({
   head: [
     ['link', { rel: 'icon', href: '/docs/logo.webp', type: 'image/webp' }],
     
-    // Аналитика (раскомментируйте нужный вариант)
+    // Аналитика
     
-    // Plausible Analytics (бесплатно до 10k просмотров/месяц)
-    // ['script', { 'data-domain': 'your-domain.com', src: 'https://plausible.io/js/script.js', defer: true }],
+    // Cloudflare Web Analytics (бесплатно, GDPR compliant, без cookie banner)
+    // Замените 'your-token' на токен из Cloudflare Dashboard → Analytics → Web Analytics
+    ['script', { src: 'https://static.cloudflareinsights.com/beacon.min.js', 'data-cf-beacon': '{"token": "your-token"}', defer: true }],
+    
+    // Plausible Analytics (бесплатно до 10k просмотров/месяц, GDPR compliant, без cookie banner)
+    // ['script', { 'data-domain': 'vue-modeler.github.io', src: 'https://plausible.io/js/script.js', defer: true }],
     
     // Umami Analytics (self-hosted, полностью бесплатно)
     // ['script', { 'data-website-id': 'your-website-id', src: 'https://analytics.example.com/script.js', defer: true }],
-    
-    // Cloudflare Web Analytics (бесплатно)
-    // ['script', { src: 'https://static.cloudflareinsights.com/beacon.min.js', 'data-cf-beacon': '{"token": "your-token"}', defer: true }],
     
     // GoatCounter (бесплатно для небольших сайтов)
     // ['script', { 'data-goatcounter': 'https://your-code.goatcounter.com/count', src: 'https://gc.zgo.at/count.js', async: true }],
