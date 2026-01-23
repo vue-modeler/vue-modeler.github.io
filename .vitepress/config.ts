@@ -5,8 +5,25 @@ export default defineConfig({
   title: 'Vue Modeler',
   description: 'Мощная библиотека для управления состоянием в Vue.js приложениях',
   
+  // Базовый URL для деплоя (раскомментируйте и укажите свой домен при необходимости)
+  // base: '/vue-modeler/',
+  
   head: [
     ['link', { rel: 'icon', href: '/public/logo.webp', type: 'image/webp' }],
+    
+    // Аналитика (раскомментируйте нужный вариант)
+    
+    // Plausible Analytics (бесплатно до 10k просмотров/месяц)
+    // ['script', { 'data-domain': 'your-domain.com', src: 'https://plausible.io/js/script.js', defer: true }],
+    
+    // Umami Analytics (self-hosted, полностью бесплатно)
+    // ['script', { 'data-website-id': 'your-website-id', src: 'https://analytics.example.com/script.js', defer: true }],
+    
+    // Cloudflare Web Analytics (бесплатно)
+    // ['script', { src: 'https://static.cloudflareinsights.com/beacon.min.js', 'data-cf-beacon': '{"token": "your-token"}', defer: true }],
+    
+    // GoatCounter (бесплатно для небольших сайтов)
+    // ['script', { 'data-goatcounter': 'https://your-code.goatcounter.com/count', src: 'https://gc.zgo.at/count.js', async: true }],
   ],
   
   themeConfig: {
