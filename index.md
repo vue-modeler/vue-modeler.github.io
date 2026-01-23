@@ -13,7 +13,7 @@ hero:
       link: /getting-started/
     - theme: alt
       text: GitHub
-      link: <https://github.com/your-username/vue-modeler>
+      link: https://github.com/vue-modeler
 
 features:
   - icon: 📦
