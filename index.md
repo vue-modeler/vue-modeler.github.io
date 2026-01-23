@@ -6,7 +6,7 @@ hero:
   text: "ООП для управления состоянием во Vue"
   tagline: "Нет хранилища — нет проблем. Меньше шаблонного кода — больше продуктивности"
   image:
-    src: /public/logo.webp
+    src: /logo.webp
   actions:
     - theme: brand
       text: Быстрый старт

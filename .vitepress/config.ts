@@ -9,7 +9,7 @@ export default defineConfig({
   base: '/docs/',
   
   head: [
-    ['link', { rel: 'icon', href: '/logo.webp', type: 'image/webp' }],
+    ['link', { rel: 'icon', href: '/docs/logo.webp', type: 'image/webp' }],
     
     // Аналитика (раскомментируйте нужный вариант)
     
