@@ -1,4 +1,5 @@
 {
+  "_comment": "Конфигурация для альтернативного деплоя на Vercel. Основной деплой настроен на GitHub Pages.",
   "buildCommand": "pnpm build",
   "outputDirectory": ".vitepress/dist",
   "devCommand": "pnpm dev",
