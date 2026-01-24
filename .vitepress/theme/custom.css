@@ -12,7 +12,7 @@
     #FF8080
   );
 
-  --vp-home-hero-image-background-image: url("/docs/logo.webp");
+  --vp-home-hero-image-background-image: url("/logo.webp");
 }
 
 .dark {

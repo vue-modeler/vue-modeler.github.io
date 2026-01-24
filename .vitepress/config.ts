@@ -9,7 +9,7 @@ export default defineConfig({
   base: '/docs/',
   
   head: [
-    ['link', { rel: 'icon', href: '/docs/logo.webp', type: 'image/webp' }],
+    ['link', { rel: 'icon', href: '/logo.webp', type: 'image/webp' }],
     
     // Аналитика
     
@@ -28,7 +28,7 @@ export default defineConfig({
   ],
   
   themeConfig: {
-    logo: '/docs/logo.webp',
+    logo: '/logo.webp',
     nav: [
       { text: 'Введение', link: '/introduction/', activeMatch: '/introduction/' },
       { text: 'Руководство', link: '/guides/' , activeMatch: '/guides/'},
