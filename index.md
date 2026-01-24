@@ -6,11 +6,11 @@ hero:
   text: "ООП для управления состоянием во Vue"
   tagline: "Нет хранилища — нет проблем. Меньше шаблонного кода — больше продуктивности"
   image:
-    src: /logo.webp
+    src: /docs/logo.webp
   actions:
     - theme: brand
       text: Быстрый старт
-      link: /getting-started/
+      link: /introduction/getting-started
     - theme: alt
       text: GitHub
       link: https://github.com/vue-modeler

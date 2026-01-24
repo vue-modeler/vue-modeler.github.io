@@ -28,7 +28,7 @@ export default defineConfig({
   ],
   
   themeConfig: {
-    logo: '/logo.webp',
+    logo: '/docs/logo.webp',
     nav: [
       { text: 'Введение', link: '/introduction/', activeMatch: '/introduction/' },
       { text: 'Руководство', link: '/guides/' , activeMatch: '/guides/'},
