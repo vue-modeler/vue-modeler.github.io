@@ -15,7 +15,7 @@ export default defineConfig({
     
     // Cloudflare Web Analytics (бесплатно, GDPR compliant, без cookie banner)
     // Замените 'your-token' на токен из Cloudflare Dashboard → Analytics → Web Analytics
-    ['script', { src: 'https://static.cloudflareinsights.com/beacon.min.js', 'data-cf-beacon': '{"token": "your-token"}', defer: true }],
+    ['script', { src: 'https://static.cloudflareinsights.com/beacon.min.js', 'data-cf-beacon': '{"token": "75dc58aef7764625995d8740de68d04e"}', defer: true }],
     
     // Plausible Analytics (бесплатно до 10k просмотров/месяц, GDPR compliant, без cookie banner)
     // ['script', { 'data-domain': 'vue-modeler.github.io', src: 'https://plausible.io/js/script.js', defer: true }],
