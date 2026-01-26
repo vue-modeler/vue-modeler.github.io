@@ -15,7 +15,6 @@ export default defineConfig({
   head: [
     // Favicon - VitePress автоматически добавляет base к путям в head
     ['link', { rel: 'icon', href: '/logo.webp', type: 'image/webp' }],
-    ['link', { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' }],
     // Стандартный favicon.ico для старых браузеров (если есть)
     // ['link', { rel: 'shortcut icon', href: '/favicon.ico' }],
     
