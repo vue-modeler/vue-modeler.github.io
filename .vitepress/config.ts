@@ -1,21 +1,29 @@
 import { defineConfig } from 'vitepress'
 import { fmTitlePlugin } from 'vitepress-plugin-frontmatter'
 
+// Для репозитория vue-modeler.github.io используйте base: '/'
+// Для репозитория docs используйте base: '/docs/'
+const base = '/' // Репозиторий: https://github.com/vue-modeler/vue-modeler.github.io.git
+
 export default defineConfig({
   title: 'Vue Modeler',
   description: 'Мощная библиотека для управления состоянием в Vue.js приложениях',
   
   // Базовый URL для деплоя на GitHub Pages
-  base: '/docs/',
+  base,
   
   head: [
+    // Favicon - VitePress автоматически добавляет base к путям в head
     ['link', { rel: 'icon', href: '/logo.webp', type: 'image/webp' }],
+    ['link', { rel: 'icon', href: '/favicon.svg', type: 'image/svg+xml' }],
+    // Стандартный favicon.ico для старых браузеров (если есть)
+    // ['link', { rel: 'shortcut icon', href: '/favicon.ico' }],
     
     // Аналитика
     
     // Cloudflare Web Analytics (бесплатно, GDPR compliant, без cookie banner)
     // Замените 'your-token' на токен из Cloudflare Dashboard → Analytics → Web Analytics
-    ['script', { src: 'https://static.cloudflareinsights.com/beacon.min.js', 'data-cf-beacon': '{"token": "75dc58aef7764625995d8740de68d04e"}', defer: true }],
+    ['script', { src: 'https://static.cloudflareinsights.com/beacon.min.js', 'data-cf-beacon': '{"token": "75dc58aef7764625995d8740de68d04e"}', defer: '' }],
     
     // Plausible Analytics (бесплатно до 10k просмотров/месяц, GDPR compliant, без cookie banner)
     // ['script', { 'data-domain': 'vue-modeler.github.io', src: 'https://plausible.io/js/script.js', defer: true }],
@@ -28,7 +36,7 @@ export default defineConfig({
   ],
   
   themeConfig: {
-    logo: '/logo.webp',
+    logo: '/logo.webp', // VitePress автоматически добавляет base
     nav: [
       { text: 'Введение', link: '/introduction/', activeMatch: '/introduction/' },
       { text: 'Руководство', link: '/guides/' , activeMatch: '/guides/'},
