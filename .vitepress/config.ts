@@ -7,7 +7,7 @@ const base = '/' // Репозиторий: https://github.com/vue-modeler/vue-m
 
 export default defineConfig({
   title: 'Vue Modeler',
-  description: 'Мощная библиотека для управления состоянием в Vue.js приложениях',
+  description: 'ООП для управления состоянием во Vue',
   
   // Базовый URL для деплоя на GitHub Pages
   base,
