@@ -1,76 +1,73 @@
 ---
-title: Контейнер зависимостей
-description: Управление зависимостями и жизненным циклом объектов в Vue приложениях
+title: Dependency Container
+description: Managing dependencies and object lifecycle in Vue applications
 ---
 
+**[@vue-modeler/dc](https://www.npmjs.com/package/@vue-modeler/dc)** is a dependency container based on [shared composable](https://github.com/vuejs/rfcs/blob/master/active-rfcs/0041-reactivity-effect-scope.md#example-a-shared-composable).
 
+The container solves the problem of managing model and service lifecycle:
 
-**[@vue-modeler/dc](https://www.npmjs.com/package/@vue-modeler/dc)** — это контейнер зависимостей на основе [shared composable](https://github.com/vuejs/rfcs/blob/master/active-rfcs/0041-reactivity-effect-scope.md#example-a-shared-composable).
+- Simplifies sharing models and services across components
+- Separates business logic from presentation
+- Enables MVVM, DDD, SOLID principles
 
-Контейнер решает проблему управления жизненным циклом моделей и сервисов:
+## Main features
 
-- Упрощает совместное использование моделей и сервисов между компонентами
-- Отделяет бизнес-логику от представления
-- Позволяет реализовать принципы MVVM, DDD, SOLID
-
-## Основные возможности
-
-- ⚡ **Ленивая загрузка**: создает зависимости только когда они нужны
-- 🗑️ **Автоматическое удаление**: удаляет неиспользуемые зависимости
-- 🔧 **Поддержка destructor**: автоматически вызывает метод `destructor` при очистке
-- 💾 **Постоянные экземпляры**: позволяет создавать долгоживущие сервисы
+- ⚡ **Lazy loading**: creates dependencies only when needed
+- 🗑️ **Auto cleanup**: removes unused dependencies
+- 🔧 **Destructor support**: calls `destructor` on cleanup
+- 💾 **Persistent instances**: for long-lived services
 
 ::: tip
-Контейнер зависимостей хранит зависимости, НО не поддерживает автоматического внедрения (autowire). Разработчик самостоятельно внедряет зависимости в отдельном модуле или слое.
+The dependency container stores dependencies but does NOT support autowire. You wire dependencies in your own module or layer.
 :::
 
-## Как это работает?
+## How it works
 
-Контейнер работает по принципу "создай по требованию, удали когда не нужно":
+The container follows "create on demand, remove when unused":
 
-1. **Регистрация фабрики** — вы регистрируете фабрику для создания экземпляра, получаете shared composable
-2. **Создание экземпляра** — экземпляр создается только при первом обращении
-3. **Переиспользование** — при повторных обращениях возвращается существующий экземпляр
-4. **Отслеживание ссылок** — контейнер считает, сколько компонентов используют экземпляр
-5. **Очистка** — когда счетчик использования становится 0, экземпляр удаляется
+1. **Register factory** — you register a factory for the instance and get a shared composable
+2. **Create instance** — the instance is created only on first access
+3. **Reuse** — subsequent access returns the same instance
+4. **Reference tracking** — the container counts how many components use the instance
+5. **Cleanup** — when the count reaches 0, the instance is removed
 
-## Регистрация фабрики
+## Registering a factory
 
-`provider` регистрирует фабрику зависимости и создает shared composable, который будет использоваться в компонентах.
+`provider` registers a dependency factory and creates a shared composable for use in components.
 
-Фабрика — простая функция, которая может возвращать значение любого типа.
+The factory is a simple function that can return any value.
 
-Контейнер хранит то, что вернула фабрика. Никаких дополнительных действий не производит. Зависимости не внедряет.
+The container stores whatever the factory returns. It does nothing else and does not inject dependencies.
 
 ```typescript
 import { provider } from '@vue-modeler/dc';
 
 const useDependency = provider(() => {
-  // ваша фабрика по созданию экземпляра
+  // your instance factory
   return {
-    // экземпляр с методами и данными
+    // instance with methods and data
   };
 });
 
 
-// так тоже можно
+// this works too
 const useSymbol = provider(() => new Symbol('dependency'));
 const useNumber = provider(() => 10);
 const useTrue = provider(() => true);
 
-// передаем зависимости в конструктор
+// pass dependencies into the constructor
 const useObject = provider(() => new SomeModel(
   useDependency(),
   useSymbol(),
   useNumber(),
   useTrue()
 ));
-
 ```
 
-## Использование в компонентах
+## Using in components
 
-Пример использования провайдера внутри шаблона компонента:
+Example of using a provider in a component template:
 
 ```html
 <template>
@@ -80,34 +77,34 @@ const useObject = provider(() => new SomeModel(
 <script setup lang="ts">
 import { useDependency } from '@/providers/myDependency';
 
-const model = useObject(); // получаем экземпляр
+const model = useObject(); // get the instance
 </script>
 ```
 
-## Постоянные экземпляры
+## Persistent instances
 
-Бывают случаи, когда нужно создать экземпляр, который будет оставаться в памяти приложения после использования. Например, сервисы уровня приложения, кэши или менеджеры состояния.
+Sometimes you need an instance that stays in memory after use, e.g. app-level services, caches, or state managers.
 
-Для этого нужно передать опцию `persistentInstance: true` в функцию `provider`.
+Pass `persistentInstance: true` to `provider`:
 
 ```typescript
 const usePersistentService = provider(
   () => new MyService(),
-  { persistentInstance: true } // дополнительные опции
+  { persistentInstance: true }
 );
 ```
 
-Основные особенности постоянных экземпляров:
+Persistent instances:
 
-- Сохраняются в контейнере даже после освобождения всей области видимости
-- Сохраняют своё состояние между перезагрузками компонентов
-- Вложенные провайдеры становятся постоянными автоматически, если находятся внутри постоянного провайдера
-- Полезны для сервисов уровня приложения, кэшей и менеджеров состояния
+- Remain in the container even after the scope is released
+- Keep their state across component remounts
+- Nested providers inside a persistent provider become persistent automatically
+- Useful for app-level services, caches, and state managers
 
-Например, вот как выглядит использование вложенных провайдеров:
+Example with nested providers:
 
 ```typescript
-// вложенный провайдер становится постоянным вместе с основным
+// nested provider becomes persistent with the parent
 const useNestedService = provider(() => new NestedService());
 
 const usePersistentService = provider(
@@ -117,7 +114,7 @@ const usePersistentService = provider(
 ```
 
 ::: warning
-На клиенте используйте постоянные экземпляры осторожно, поскольку они не будут удаляться автоматически.
+On the client, use persistent instances with care — they are not removed automatically.
 :::
 
-Для SSR постоянные экземпляры безопасны, так как при каждом запросе создается новый экземпляр контейнера, а старый удаляется вместе с содержимым.
+For SSR, persistent instances are safe: each request gets a new container instance, and the previous one is discarded with its contents.

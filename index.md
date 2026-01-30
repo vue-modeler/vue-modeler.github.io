@@ -3,13 +3,13 @@ layout: home
 
 hero:
   name: "Vue Modeler"
-  text: "ООП для управления состоянием во Vue"
-  tagline: "Нет хранилища — нет проблем. Меньше шаблонного кода — больше продуктивности"
+  text: "OOP for state management in Vue"
+  tagline: "No store — no problem. Less boilerplate — more productivity"
   image:
     src: /logo.webp
   actions:
     - theme: brand
-      text: Быстрый старт
+      text: Getting Started
       link: /introduction/getting-started
     - theme: alt
       text: GitHub
@@ -17,27 +17,27 @@ hero:
 
 features:
   - icon: 📦
-    title: Модель вместо хранилища
-    details: Нет хранилища — нет проблем. Состояние инкапсулировано в модели. Модель — shallowReactive объект. Уничтожение модели равно уничтожению состояния.
+    title: Model instead of store
+    details: No store — no problem. State is encapsulated in the model. The model is a shallowReactive object. Destroying the model destroys the state.
   - icon: ⚡
-    title: Действие — это объект
-    details: Имеет свое состояние и поведение для управления выполнением. Создается автоматически из метода модели.
+    title: Action is an object
+    details: Has its own state and behavior for execution control. Created automatically from a model method.
   - icon: 🏛️
-    title: ООП
-    details: Модель определяется через стандартный класс, действия - через методы. Наследование, инкапсуляция, полиморфизм, деструктор доступны по умолчанию.
+    title: OOP
+    details: Model is defined via a standard class, actions via methods. Inheritance, encapsulation, polymorphism, destructor are available by default.
   - icon: 🏗️
-    title: Контейнер моделей и зависимостей
-    details: Не нужно думать как создать, получить или удалить модель после использования — за это отвечает контейнер.
+    title: Model and dependency container
+    details: No need to think about how to create, get, or remove a model after use — the container handles it.
   - icon: ✂️
-    title: Меньше кода
-    details: Действие имеет методы для контроля выполнения и обработки ошибок. Вы будете писать меньше шаблонного кода.
+    title: Less code
+    details: Action has methods for execution control and error handling. You will write less boilerplate.
   - icon: 🧪
-    title: Простота тестирования
-    details: Меньше кода — меньше тестов.
+    title: Easy testing
+    details: Less code — fewer tests.
   - icon: 🗜️
-    title: Минимальный размер
-    details: Компактная библиотека с минимальным размером бандла.
+    title: Minimal size
+    details: Compact library with minimal bundle size.
   - icon: 🔒
-    title: Типобезопасность
-    details: Все подсказки автодополнения будут работать как внутри, так и вне контекста класса.
+    title: Type safety
+    details: All autocomplete hints work both inside and outside the class context.
 ---

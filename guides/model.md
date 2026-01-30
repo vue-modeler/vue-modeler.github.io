@@ -1,40 +1,40 @@
 ---
-title: Модель
-description: Подробное руководство по созданию и использованию моделей в Vue Modeler
+title: Model
+description: Guide to creating and using models in Vue Modeler
 ---
 
-Модель объединяет состояние (данные) и поведение (действия) в единый реактивный объект, который автоматически управляет своими эффектами и очищает их при уничтожении.
+The model combines state (data) and behavior (actions) into a single reactive object that manages its effects and cleans them up on destruction.
 
 ::: tip
-**Модель = данные + действия + реактивность + управление эффектами**
+**Model = data + actions + reactivity + effect management**
 :::
 
-## Основные понятия
+## Core concepts
 
-В Vue Modeler существует четкая иерархия понятий, которые важно понимать для эффективной работы с моделями.
+Vue Modeler has a clear hierarchy of concepts:
 
-**ProtoModel** — это абстрактный базовый класс, который предоставляет фундаментальную функциональность для всех моделей. Это "движок" системы моделей, который:
+**ProtoModel** is the abstract base class that provides the foundation for all models. It:
 
-- создает для каждой модели свой `EffectScope`;  
-- преобразует методы с декораторами `@action` в действия и организует к ним доступ;  
-- предоставляет единый конструктор моделей — статический метод `model`;  
-- имеет встроенные методы `watch` и `computed`, которые регистрируют эффекты внутри локального EffectScope;  
-- очищает эффекты при уничтожении модели.
+- creates an `EffectScope` per model;
+- turns methods decorated with `@action` into actions and exposes them;
+- provides the unified model constructor — static method `model`;
+- has built-in `watch` and `computed` that register effects in the model's EffectScope;
+- cleans up effects when the model is destroyed.
 
-**Класс модели** — это обычный класс, унаследованный от `ProtoModel`, который определяет структуру и поведение конкретной модели. Это "шаблон" для создания экземпляров моделей.
+**Model class** is a normal class extending `ProtoModel` that defines a concrete model's structure and behavior.
 
-Класс модели определяет:
+The model class defines:
 
-- **Структуру состояния**: какие данные хранит модель;  
-- **Действия**: асинхронные методы помеченные декоратором `@action`, которые меняют состояние модели;  
-- **Бизнес-логику**: правила и ограничения для работы с данными;  
-- **Наблюдатели и вычисляемые свойства**: производные значения на основе состояния.
+- **State shape**: what data the model holds;
+- **Actions**: async methods marked with `@action` that change model state;
+- **Business logic**: rules and constraints for the data;
+- **Watchers and computed**: derived values from state.
 
-**Модель** — это shallow reactive объект со своим EffectScope, полученный из экземпляра класса, в котором действия — это исполняемые объекты со своим реактивным состоянием.
+**Model** is a shallow reactive object with its own EffectScope, created from a class instance, where actions are executable objects with their own reactive state.
 
-## Конструктор и создание модели
+## Constructor and creating a model
 
-Чтобы создать модель определите конструктор и вызовите статический метод `model`.
+Define a constructor and call the static `model` method to create a model.
 
 ```typescript
 // counter.ts
@@ -50,28 +50,24 @@ export class Counter extends ProtoModel {
   ...
 }
 
-// Это модель
+// This is a model
 const counterModel = Counter.model(new ApiService())
 
-// Это экземпляр класса. НЕ модель.
+// This is a class instance. NOT a model.
 const counter = new Counter(new ApiService())
-
 ```
 
 ::: tip
- Если вызвать конструктор через `new`, то вы получите экземпляр класса.  Экземпляр класса — это не модель, он не реактивен, и действия не объекты.  
+If you call the constructor with `new`, you get a class instance. A class instance is not a model: it is not reactive and actions are not objects.
 :::
 
-Метод `model` — универсальный именованный конструктор, он определен в `ProtoModel` и существует во всех классах модели.
-`model` копирует сигнатуру конструктора класса, поэтому проверка типов в TS будет работать.
+The `model` method is the universal named constructor; it is defined on `ProtoModel` and exists on all model classes. It mirrors the class constructor signature, so TypeScript type-checking works.
 
-Под капотом `model` создает экземпляр класса и применяет к нему статический метод `createModel`. `createModel` — это фабрика модели. Она делает из экземпляра класса `shallowReactive` объект и оборачивает в прокси, который превращает действия в объекты.
+Under the hood, `model` creates a class instance and applies the static `createModel` method. `createModel` is the model factory: it turns the instance into a `shallowReactive` object and wraps it in a proxy that exposes actions as objects.
 
-Для особых случаев вы можете сделать свой именованный конструктор, как статический метод. У него будет своя сигнатура, в зависимости от контекста.
+For special cases you can add your own static factory. To have it return a model, create a class instance and call the static `createModel` on it.
 
-Чтобы новый конструктор возвращал модель, создайте  экземпляр класса и примените к нему статический метод `createModel`.
-
-```typescript wrap=false {8,10,12}
+```typescript
 // counter.ts
 import { ProtoModel, action } from '@vue-modeler/model'
 
@@ -79,251 +75,64 @@ export class Counter extends ProtoModel {
   protected _count = 0
 
   static customFactoryModel(startValue: number, apiService: SomeApiService): Model<Counter> {
-    // 1. создаем экземпляр класса
     const counter = new Counter(apiService)
-    // 2. устанавливаем начальное значение
     counter._count = startValue
-    // 3. делаем модель из экземпляра класса
     return Counter.createModel(counter)
   }
-
-  constructor(
-    private apiService: SomeApiService,
-  ) {
-    super()
-  }
   ...
 }
-
-// 4. получаем модель двумя способами в зависимости от ситуации
-const customCounter = Counter.customFactoryModel(10, new ApiService())
-const defaultCounter = Counter.model(new ApiService())
 ```
 
-## Уничтожение модели
+## Destroying the model
 
-Все модели имеют `destructor`, он определен в `ProtoModel`. Он удалит все эффекты и effect Scope.  Его нужно вызвать, когда модель больше не нужна. Если используете контейнер [@vue-modeler/dc](https://www.npmjs.com/package/@vue-modeler/dc), то не нужно беспокоиться: контейнер автоматически вызовет `destructor` и удалит модель, когда она не используется
+All models have `destructor` (defined on `ProtoModel`). It removes all effects and the EffectScope. Call it when the model is no longer needed. If you use [@vue-modeler/dc](https://www.npmjs.com/package/@vue-modeler/dc), the container will call `destructor` and remove the model when it is unused.
 
-Если нужны дополнительные операции при удалении, определите свой деструктор.
+Override `destructor` if you need extra cleanup.
 
 ::: warning
- Обязательно вызывайте `super.destructor`, иначе получите утечки памяти
+Always call `super.destructor()`, or you will leak memory.
 :::
 
-## Свойства
+## Properties
 
-Значение свойств — это и есть состояние модели, поэтому состояние неотделимо от модели. Нет отдельного хранилища состояния.
+Property values are the model state; there is no separate state store.
 
-Публичные и защищенные свойства реактивны автоматически после создания модели, vue composition api не нужно использовать. Так происходит, потому что `model` — shallow reactive объект. Приватные свойства не будут реактивными.
+Public and protected properties are reactive automatically after the model is created; you don't need Vue Composition API. That's because the model is a shallow reactive object. Private properties are not reactive.
 
-Используйте vue composition api явно при создании свойств, если  
+Use Vue Composition API explicitly when:
 
-- собираетесь наблюдать за ними внутри класса модели,  
-- нужна глубокая реактивность для сложных объектов,  
-- нужна реактивность приватного свойства.
+- you need to watch them inside the model;
+- you need deep reactivity for complex objects;
+- you need a private property to be reactive.
 
-Делайте свойства защищенными, доступ открывайте через геттеры. Это позволит избежать прямых мутаций свойств и инкапсулировать состояние.
+Prefer protected properties and expose them via getters to avoid direct mutation and to encapsulate state.
 
-```typescript
-// counter.ts
-import { ProtoModel, action } from '@vue-modeler/model'
+## Actions and methods
 
-export class Counter extends ProtoModel {
-  
-  // Оба свойства будут реактивны в модели автоматически.
-  // Использовать Vue Composition API не нужно.
-  public value1 = 0
-  protected _value2 = 0
+**Action** is an object but is declared as an async method with `@action` that changes state and returns no data.
 
-  constructor(
-    // это тоже свойство. Оно не будет реактивным, потому что приватное.
-    private apiService: SomeApiService,
-  ) {
-    super()
+See [Action](/guides/action) for using actions inside and outside classes.
 
-    // Этот наблюдатель НЕ РАБОТАЕТ,
-    // потому что в конструкторе this еще не shallow reactive
-    this.watch(
-      () => this.value1,
-      () => {
-        console.log('value1 changed', this.value1)
-      }
-    )
-  }
+## Watchers
 
-  // Здесь this уже shallow reactive модель, 
-  // поэтому this.value2 будет работать как реактивное свойство. 
-  get value2(): number {
-    return this._value2
-  }
-  ...
-}
-
-```
-
-## Действия и методы
-
-**Действие** — это объект, но определяется как асинхронный метод с декоратором `@action`, который меняет состояние и не возвращает данных.
-
-Как работать с действиями внутри классов и снаружи смотрите раздел [Действия](/guides/action).
-
-## Наблюдатели
-
-Наблюдателя создает метод `watch` — это обертка вокруг  vue composition API. Он создаст наблюдатель, привяжет эффект к effect scope модели, сохранит `stop handler` и вернёт его.
-Сохранённый `stop handler` выполнится при уничтожении модели в деструкторе.
+The `watch` method creates a watcher — it wraps Vue's composition API, registers the effect in the model's effect scope, stores the stop handle and returns it. That stop handle is run when the model is destroyed in the destructor.
 
 ::: warning
- не используйте watch или computed напрямую из vue composition api. Это приведет к утечкам памяти.
+Do not use `watch` or `computed` directly from Vue's composition API. That leads to memory leaks.
 :::
 
-В модели есть 3 объекта для наблюдения:
+You can watch: reactive dependencies, properties, and dynamic models. For reactive dependencies or properties, call `watch` in the constructor. For properties, note that in the constructor `this` is not yet shallow reactive, so use ref/computed if you need to watch them.
 
-- реактивные зависимости,  
-- свойства,
-- динамические модели.
+For **dynamic models** (e.g. a repository that loads DTOs and turns them into models), call `watch` after creating the model, store the stop handle, and call it when removing the model from the repository. Otherwise the watcher will keep a reference and the model won't be garbage-collected.
 
-**Для наблюдения за реактивными зависимостями или свойствами**  вызывайте `watch` в конструкторе. C реактивными зависимостями проблем не будет.  
+## Inheritance, polymorphism
 
-Со свойствами есть одна сложность: в конструкторе this еще не shallow reactive, поэтому свойства еще не реактивны. Чтобы наблюдатель работал, нужно явно сделать свойство реактивным через vue composition api.
+The model class is a normal class; standard OOP applies. Parent actions work in child classes.
 
-```typescript
-// counter.ts
-import { ref } from 'vue'
-import { ProtoModel, action } from '@vue-modeler/model'
+## Dependencies
 
-export class Counter extends ProtoModel {
-  protected _count = 0
-  protected _countForWatch = ref(0)
-  
-  constructor(
-    someDependency: OtherReactiveObject,
-    ...
-  ) {
-    super()
+Dependencies are passed as constructor arguments. They can be: API services, DB clients, router, UI settings, other models or stores (Pinia, Vuex, any reactive object). The model does not inject dependencies; the container does.
 
-    // Этот наблюдатель НЕ РАБОТАЕТ,
-    // потому что this в конструкторе еще не shallow reactive
-    this.watch(
-      () => this._count,
-      () => {
-        console.log('count changed', this._count)
-      }
-    )
+## API reference
 
-    // Этот наблюдатель работает,
-    // потому что this._countForWatch сразу реактивный
-    this.watch(
-      () => this._countForWatch,
-      () => {
-        console.log('countForWatch changed', this._countForWatch.value)
-      }
-    )
-    
-    // Этот наблюдатель работает,
-    // потому что someDependency.someProperty сразу реактивный
-    this.watch(
-      () => someDependency.someProperty,
-      () => {
-        console.log('someDependency.someProperty changed', someDependency.someProperty)
-      }
-    )
-  }
-  ...
-}
-```
-
-**Динамические модели** появляются, исчезают, меняются в процессе. Например,  
-репозиторий загружает коллекцию dto, делает из dto коллекцию моделей, и следит за каждой моделью. Если у вас похожий случай, то:
-
-1. вызовите `watch` после создания модели,
-2. сохраните `stop handler`
-3. вызовите `stop handler` при удалении модели из репозитория.
-
-::: warning
- Если просто удалить модель, то наблюдатель останется и будет ссылаться на модель. Сборщик мусора не сможет её удалить.
-
- Обязательно выполняйте пункты 2 и  3, чтобы удалить наблюдатель, иначе будет утечка памяти.
-:::
-
-```typescript
-// counter.ts
-import { ref } from 'vue'
-import { ProtoModel, action } from '@vue-modeler/model'
-
-export class Repository extends ProtoModel {
-  
-  private _models: Set<Model<SomeModel>> = new Set()
-  private _stopWatchers: Map<Model<SomeModel>, WatchStopHandle> = new Map()
-
-  constructor(
-    private fetchDtos: () => Promise<Dto[]>,
-    private modelFactory: (dto: Dto) => Model<SomeModel>,
-  ) {
-    super()
-
-    this.init()
-  }
-  ...
-
-  @action async init(): Promise<void> {
-    const dtos = await this.fetchDtos()
-    for (const dto of dtos) {
-      // 1. создаем модель
-      const model = this.modelFactory(dto)
-      // 2. создаем наблюдателя
-      const stopWatcher = this.watch(
-        () => model.property,
-        () => {
-          console.log('model changed', model)
-        }
-      })
-
-      // 3. сохраняем модель
-      this._models.add(model)
-      // 4. сохраняем наблюдателя
-      this._stopWatchers.set(model, stopWatcher)
-    }
-  }
-
-  @action async destroyModel(model: Model<SomeModel>): Promise<void> {
-    // 1. удаляем модель
-    this._models.delete(model)
-   
-    const stopWatcher = this._stopWatchers.get(model)
-    if (stopWatcher) {
-      // 2. останавливаем наблюдение
-      stopWatcher()
-    }
-    // 3. удаляем наблюдателя
-    this._stopWatchers.delete(model)
-  }
-
-  destructor() {
-    for (const [model, stopWatcher] of this._stopWatchers) {
-      stopWatcher()
-    }
-
-    this._models.clear()
-    this._stopWatchers.clear()
-    super.destructor()
-  }
-}
-```
-
-## Наследование, полиморфизм
-
-Класс модели — это стандартный класс, тут работают все подходы ООП. Действия родителей будут работать в потомках.
-
-## Зависимости
-
-Зависимости попадают в модель как аргументы конструктора. Здесь нет ограничений, это могут быть:
-
-- компоненты инфраструктуры: АПИ сервисы, клиенты к БД  
-- компоненты слоя UI: роутер, настройки UI  
-- другие модели или хранилища: Pinia,  vuex, любые реактивные объекты
-
-Модель не умеет внедрять зависимости, за это отвечает контейнер.
-
-## Справочник API
-
-Полное описание всех методов и свойств модели см. в разделе [API модели](/api/proto-model).
+See [Model API](/api/proto-model) for full method and property reference.

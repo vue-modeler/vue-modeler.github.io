@@ -1,524 +1,92 @@
 ---
-title: Действие (Action)
-description: Подробное руководство по созданию и использованию действий в Vue Modeler
+title: Action
+description: Guide to creating and using actions in Vue Modeler
 outline: deep
 ---
 
+**In [@vue-modeler/model](https://www.npmjs.com/package/@vue-modeler/model), an action is a first-class object** that holds an operation to change model state, with methods to control execution and properties for execution state.
 
+## Concept
 
-**В [@vue-modeler/model](https://www.npmjs.com/package/@vue-modeler/model) действие — это объект первого класса**, который хранит операцию для изменения состояния модели, имеет методы управления выполнением и свойства для контроля состояния выполнения.
+- An action is declared as a model method with the `@action` decorator. The method is async and returns nothing.
+- The method is turned into an action when the model is created.
+- The action belongs to the model where it is declared.
+- The action keeps the model context wherever it is used.
 
-## Общая концепция
+Benefits:
 
-- Действие объявляется как метод класса модели с декоратором `@action`. Метод асинхронный и не возвращает данных.
-- Метод преобразуется в действие при создании модели.
-- Действие принадлежит модели, в которой объявлено.
-- Действие при любом использовании сохраняет контекст модели.
+- execution status is available without boilerplate;
+- cancel, lock, unlock are methods — no need to reinvent the wheel;
+- action usage and error handling are consistent and predictable;
+- business logic only handles state changes;
+- much less code than with other approaches.
 
-Такой подход дает ряд преимуществ:
+**Without actions (boilerplate):** you end up with flags like `isAddingProduct`, `addError`, try/catch/finally in every operation. **With actions:** you declare the method with `@action` and use `action.exec()`, `action.isPending`, `action.error`. The action object handles state and errors.
 
-- статус выполнения доступен для отслеживания без написания шаблонного кода
-- отмена, блокировка, разблокировка доступны как методы — не нужно изобретать "велосипед" ;
-- работа с действиями и обработка ошибок  единообразна и предсказуема;
-- код бизнес-логики содержит только логику изменения состояния модели;
-- объем кода меньше в разы по сравнению с другими подходами.
+## Using actions
 
-Вот наглядный пример.
+### Declare
 
-**Без действий (шаблонный код):**
+Add `@action` to an async method that returns `Promise<void>`.
 
-```typescript
-export const useCart = defineStore('cart', () => {
-  const items = shallowRef<Product[]>([])
-  // Флаги выполнения операции
-  const isAddingProduct = ref(false)
-  const addError = ref<Error | null>(null)
+Requirements: class extends `ProtoModel`; method returns `Promise<void>`; method is decorated with `@action`.
 
-  async function addProduct(product: Product): Promise<void> {
-    // Проверяем, что операция не выполняется
-    if (isAddingProduct.value) return
-    // Устанавливаем флаг выполнения операции
-    isAddingProduct.value = true
-    // Сбрасываем ошибку
-    addError.value = null
-    // Выполняем операцию
-    try {
-      await api.addToCart(product)
-      // Сохраняем новое состояние в модели
-      items.value = [...items.value, product]
-    } catch (error) {
-      // Сохраняем ошибку
-      addError.value = error as Error
-      // Пробрасываем ошибку дальше
-      throw error
-    } finally {
-      // Сбрасываем флаг выполнения операции
-      isAddingProduct.value = false
-    }
-  }
+### Get the action object
 
-  return {
-    items,
-    isAddingProduct,
-    addError,
-    addProduct
-  }
-})
-
-const cart = useCart()
-await cart.addProduct(newProduct)
-
-watch(cart.isAddingProduct, (value) => {
-  console.log('isAddingProduct', value)
-})
-
-watch(cart.addError, (value) => {
-  console.log('addError', value)
-})
-```
-
-Разберем, что происходит в этом коде.
-
-Разработчик пишет шаблонный код для каждой операции изменения состояния:
-
-1. Устанавливает флаг выполнения операции
-2. Готовит данные для сохранения
-3. Сохраняет новое состояние в хранилище
-4. Если сохранение:
-    1. **успешно** — коммитит новое состояние в модель
-    2. **не успешно** — устанавливает флаг ошибки, ошибка сохраняется или  прокидывается дальше
-5. Удаляет флаг выполнения операции
-
-Есть особые случаи:
-
-- Нужно следить, чтобы операция не была вызвана, пока не завершился предыдущий вызов, иначе может возникнуть неконсистентное состояние.
-- Случается, что операцию нужно отменить или заблокировать.
-
-Это тоже шаблонный код, но разработчики по разному обрабатывают эти случаи.
-Такой код сложно поддерживать и тестировать.
-
-Действие-объект берет на себя всё, включая особые случаи. Позволяет разработчику сконцентрироваться на бизнес-логике (п. 2, 3, 4.1), избавляет от когнитивной нагрузки. Код всех операций стандартизирован и не нужно изобретать велосипед.
-
-**То же самое, но с действиями:**
+After the model is created, the action is a property and an object. Use the method name. TypeScript types work.
 
 ```typescript
-class Cart extends ProtoModel {
-    protected _items: Product[] = [] 
-    ...
-
-    get items(): Product[] {
-      return this._items 
-    }
-    
-    @action async addProduct(product: Product): Promise<void> {
-        // Отправляем данные на серверы
-        await this.apiService.addToCart(product);
-        // Сохраняем данные в модели
-        this._items.push(product);
-    }
-}
-
-const cart = Cart.model(apiService);
-
-await cart.addProduct.exec(newProduct);
-
-watch(cart.addProduct.isPending, (value) => {
-  console.log('isPending', value)
-})
-
-watch(cart.addProduct.error, (value) => {
-  console.log('error', value)
-})
-```
-
-## Как использовать действия
-
-Разберем на примере добавления товара в корзину.
-
-```javascript
-// Определяем класс модели.
-//  Не забываем унаследоваться от ProtoModel. Это обязательно.
-class CartModel extends ProtoModel {
-    ...
-
-    // Декоратор @action указывает, что это будет действие.
-    @action async addProduct(product: Product): Promise<void> {
-        // Отправляем данные на серверы
-        await this.apiService.addToCart(product);
-        // Сохраняем данные в модели
-        this._items.push(product);
-    }
-}
-
-// Создаем модель
-const cartModel = CartModel.model(apiService)
-
-// Выполняем действие
-await cartModel.addProduct.exec(newProduct);
-
-// Следим за статусом выполнения операции
-watch(
-  cartModel.addProduct.isPending,
-  console.log
-)
-// Следим за ошибками
-watch(
-  cartModel.addProduct.error,
-  console.log
-)
-```
-
-### Объявляем
-
-Просто добавляем `@action` к асинхронному методу, который не возвращает данных.
-
-```typescript
-// Определяем класс модели. Не забываем унаследоваться от ProtoModel.
-class CartModel extends ProtoModel {
-    ...
-    @action async addProduct(product: Product): Promise<void> {
-        // Отправляем данные на серверы
-        await this.apiService.addToCart(product);
-        // Сохраняем данные в модели
-        this._items.push(product);
-    }
-}
-```
-
-Обязательные условия:
-
-- Класс должен наследоваться от `ProtoModel`.
-- Метод должен возвращать `Promise<void>`.
-- Метод должен быть декорирован через `@action`.
-
-### Получаем как объект
-
-**После создания модели действие — это свойство модели и объект.** Для получения действия используйте имя метода, которое было объявлено как действие. TypeScript корректно определяет типы, поэтому автодополнение свойств и методов для действия будет работать.
-
-```typescript
-// ✅ Правильно - используем .exec()
+// ✅ Correct — use .exec()
 await cartModel.addProduct.exec(productId);
 
-// ❌ Неправильно - TypeScript будет ругаться
+// ❌ Wrong — TypeScript will complain
 await cartModel.addProduct(productId);
 ```
 
-**Внутри класса модели TypeScript видит действие как метод**, но на самом деле это объект. Чтобы получить доступ к свойствам и методам действия и избежать ошибок типов, нужно получить действие через метод модели `this.action(this.addProduct)`. Он вернет действие с правильными типами, и проблем с TypeScript не будет. Теперь действие можно использовать так же, как и во внешнем контексте: выполнять, следить за состоянием и т.п.
+**Inside the model**, TypeScript sees the action as a method. To access its properties and methods, use `this.action(this.addProduct)`. That returns the action with correct types.
 
-```typescript
-// ❌ Неправильно. Для TypeScript this.addProduct - это метод,
-//  и у него нет свойств
-const error = this.addProduct.error;
+### Execute
 
-// ✅ Правильно - получаем действие как объект, и у него есть свойства
-const error = this.action(this.addProduct).error;
-```
+**Outside:** get the action from the model and call `exec(...)`. It mirrors the original method signature.
 
-Действие-объект сохраняет контекст модели. Можно безопасно сохранять его в переменную и использовать в других местах.
-
-```typescript
-
-const addProductAction = cart.addProduct;
-await addProductAction.exec(productId);
-
-watch(addProductAction.isPending, (value) => {
-  console.log('isPending', value)
-})
-
-watch(addProductAction.error, (value) => {
-  console.log('error', value)
-})
-```
-
-### Выполняем
-
-**Во внешнем контексте** получаем действие-объект через свойство модели и вызываем метод `exec(...)`.
-Он копирует сигнатуру исходного метода, поэтому проверки типов будут работать.
-
-```typescript
-// ✅ Правильно - используем .exec()
-await cartModel.addProduct.exec(productId);
-
-// ❌ Неправильно - TypeScript будет ругаться, потому что здесь действие уже объект
-await cartModel.addProduct(productId);
-```
-
-**Внутри класса модели** есть 2 способа выполнить действие:
-
-1. получить как объект через `this.action(this.addProduct)` и вызвать метод `exec(...)`.
-2. вызвать действие как метод модели: `this.addProduct(newProduct)`. Это возможно, потому что TS "видит" действие как метод внутри класса.
-
-```typescript
-// ❌ Неправильно. Внутри класса так не работает,
-// потому что TypeScript видит действие как метод,
-// а не как объект.
-await this.addProduct.exec(productId);
-
-// ✅ Правильно: получаем как объект, вызываем exec
-await this.action(this.addProduct).exec(productId);
-
-// ✅ Так тоже можно, если нужно проверить состояние
-const addProductAction = this.action(this.addProduct);
-await addProductAction.exec(productId);
-if (addProductAction.error) {
-  // Обрабатываем ошибку
-}
-
-// ✅ Это тоже работает. Вызываем действие как метод модели.
-await this.addProduct(productId);
-```
+**Inside the model:** either get the action via `this.action(this.addProduct)` and call `exec(...)`, or call `this.addProduct(args)` as a method (the decorator forwards to `exec`).
 
 ::: warning
-Внутри класса вызов `this.addProduct()` выглядит как обычный вызов метода, но на самом деле это не так. Декоратор `@action` подменяет оригинальный метод и "под капотом" получает действие как объект и вызывает метод `exec(...)`. Поэтому `try...catch` не будет работать, как ожидается. См. [Обработка ошибок](/guides/action#обрабатываем-ошибки).
+Inside the class, `this.addProduct()` looks like a normal method call but it is not. The `@action` decorator replaces the method and under the hood calls `exec(...)`. So `try...catch` will not behave as usual. See [Error handling](/guides/action#handling-errors).
 :::
 
-Действие асинхронное, поэтому `exec(...)` всегда возвращает `Promise<void>`. Вы не получите данные, даже если попробуете их вернуть. Это сделано осознанно: действие должно менять состояние модели, а не возвращать данные.
+### State
 
-### Следим за состоянием
+An action can be in one of five states, each with a property:
 
-Действие может находиться в одном из пяти состояний, каждое из которых отражается в соответствующем свойстве:
+- **`isReady`** — ready to run (initial state)
+- **`isPending`** — currently running
+- **`isAbort`** — was cancelled
+- **`isLock`** — locked and cannot run
+- **`error`** — finished with error (`ActionError` or `null`)
 
-- **`isReady`** — действие готово к выполнению (начальное состояние)
-- **`isPending`** — действие выполняется в данный момент
-- **`isAbort`** — действие было отменено
-- **`isLock`** — действие заблокировано и не может быть запущено
-- **`error`** — действие завершилось с ошибкой (содержит `ActionError` или `null`)
+All are reactive and read-only. Use them in templates and watchers.
 
-Все свойства реактивны и доступны только для чтения. В любой момент времени только одно из булевых свойств (`isReady`, `isPending`, `isAbort`, `isLock`) будет `true`, остальные — `false`. Свойство `error` может быть `null` или содержать объект ошибки.
+### Handling errors
 
-Внутри UI компонент можно использовать все стандартные средства наблюдения за реактивными переменными: watch, watchEffect, computed.
+Any action can finish with an error. `exec(...)` catches exceptions, wraps them in `ActionError` and stores them in `error`. So `try...catch` around `exec()` does not catch those errors. Check `action.error` after awaiting `exec()` or watch `action.error`.
 
-```vue
+To rethrow: `action.error?.throwCause()`.
 
-<template>
-  <div>
-    <p>isPending: {{ cartModel.addProduct.isPending }}</p>
-    <p>error: {{ error.message }}</p>
-  </div>
-</template>
+When a child action fails, the error stays on the child. The parent continues. To abort the parent, call `this.child.childAction.error?.throwCause()` in the parent action.
 
-<script setup>
-const cartModel = useCartModel()
-watch(
-  () => cartModel.addProduct.isPending,
-  (value) => console.log(value)
-)
+### Cancelling
 
+Use `abort()`. It is built on `AbortController`.
 
-const error = computed(() => cartModel.addProduct.error?.cause ?? cartModel.delProduct.error?.cause )
-</script>
-```
+To support abort:
 
-Внутри класса модели нужно использовать только `this.watch` и `this.computed`.
-Эти методы доступны во всех моделях.
+1. The action method’s last parameter must be of type `AbortController`.
+2. The parameter must be optional so TypeScript doesn’t require it when calling `exec`.
+3. The method body must use the passed `AbortController` (e.g. pass it to fetch or API calls).
 
-Если нужно наблюдать за собственным действием, его нужно получить как объект.
+`exec` creates or accepts an `AbortController`, passes it as the last argument, and keeps it for the run. Calling `action.abort()` triggers abort on that controller; the action then goes to `abort` state and stores the reason in `abortReason`.
 
-```typescript
-class CartModel extends ProtoModel {
-  ...
-  constructor () {
-    super()
-    this.watch(
-      () => this.action(this.addProduct).isPending,
-      (value) => console.log('addProduct isPending', value)
-    )
-  }
+When one action calls another and both should be cancellable, pass the same `AbortController` into the child’s `exec(abortController)`.
 
-  @action async addProduct(product: Product): Promise<void> {
-    ...
-  }
-}
-```
-
-Если действие принадлежит другой модели, то его действие уже объект, можно обращаться по имени метода.
-
-```typescript
-class CartModel extends ProtoModel {
-  ...
-  constructor (
-    readonly user: Model<User>
-  ) {
-    super()
-    this.watch(
-      () => this.user.login.isPending,
-      (isPending) => console.log('user login isPending', isPending)
-    )
-  }
-}
-```
-
-### Обрабатываем ошибки
-
-Любое действие может завершиться с ошибкой. Их можно разделить на 3 группы:
-
-- **Исключения** возникают в бизнес-логике или слое инфраструктуры: ошибки валидации данных, авторизации, нехватки товара, любой неуспешный ответ от сервера или БД.
-- **Системные ошибки** выбрасываются самим интерпретатором JS: RangeError, ReferenceError, SyntaxError, TypeError, URIError, EvalError.
-- **Внутренние ошибки** выбрасываются внутри библиотеки при нарушении логики работы действия или попытке выполнить действие в неверном состоянии.
-
-Системные и внутренние ошибки не должны возникать в продакшене. Они приводят к неожиданному поведению и  падению приложения. Они могут быть пойманы, но не обработаны, или обработаны не корректно, что вызовет неожиданное поведение.
-
-Исключения - ожидаемы, должны быть обработаны и отображены пользователю в каком-то виде.
-
-Метод `exec(...)` перехватывает только исключения, оборачивает их в `ActionError` и сохраняет в свойстве `error` для обработки. Свойство `error` доступно только для чтения и реактивно. Повторный запуск действия сбросит ошибку.
-`ActionError` обеспечивает единообразный интерфейс для обработки.
-
-```typescript
-class CartModel extends ProtoModel {
-  ...
-
-  @action async addProduct(product: Product): Promise<void> {
-    // это будет перехвачено 
-    throw new Error('Product not found')
-
-    // здесь тоже будет перехвачено, если там ошибка 
-    await this.apiService.addProduct(product)
-  }
-}
-```
-
-Так как `exec` перехватывает исключения, то try...catch не работает. Проверяйте свойство `error` после выполнения действия.
-
-```typescript
-try {
-  // ❌ это не работает.
-  // exec перехватит исключение,
-  // сохранит в error,
-  // завершит выполнение как обычно.
-  await action.exec()
-} catch (error) {
-  // ❌ сюда никогда не попадем.
-  console.error('Error:', error.message)
-}
-
-
-// ✅ это работает. 
-await action.exec()
-// ✅ проверяем свойство error.
-if (action.error?.cause instanceof HttpError) {
-  console.error('HTTP error:', action.error.cause.message)
-}
-if (action.error?.cause instanceof BusinessError) {
-  console.error('Business error:', action.error.cause.message)
-}
-```
-
-Действия могут вызывать друг друга. Если в дочернем действии возникла ошибка, она там и останется, потому что перехвачена в `exec`. Родительское действие продолжит выполнение, как-будто ошибки не было. Чтобы прервать выполнение, нужно пробросить ошибку в родительское действие. Это можно сделать методом `ActionError.throwCause()` без дополнительных проверок.
-
-```typescript
-
-class ChildModel extends ProtoModel {
-  ...
-  @action async childAction(): Promise<void> {
-    throw new Error('Child error')
-  }
-}
-
-class ParentModel extends ProtoModel {
-  constructor (
-    readonly child: Model<ChildModel>
-  ) {
-    super()
-  }
-
-  @action async parentAction(): Promise<void> {
-    await this.child.childAction.exec()
-    // пробрасываем ошибку в родительское действие
-    this.child.childAction.error?.throwCause()
-    // или так, но больше кода. Лучше использовать throwCause().
-    if (this.child.childAction.error) {
-      throw this.child.childAction.error.cause
-    }
-  }
-}
-```
-
-Если нужно, чтобы `exec` не перехватывал ошибку, то можно:
-
-1. создать свой класс ошибок,
-2. унаследовать от  `ActionInternalError`,
-3. оборачивать ошибки в него и кидать дальше.
-
-Для таких ошибок работает стандартный try...catch процесс.
-Но так лучше не делать.
-
-Используйте прихват в `exec` и свойство `error`, этого достаточно для большинства случаев.
-
-::: tip
-
-- `exec` перехватывает только исключения, try...catch не работает.
-- проверяйте свойство `error` после выполнения действия.
-- для проброса ошибки дальше используйте метод `throwCause()`.
-:::
-
-### Отменяем выполнение
-
-Для отмены есть метод `abort()`. Процесс отмены построен на `AbortController`.
-
-Чтобы метод `abort()` работал, нужно выполнить следующие условия:
-
-1. При объявлении действия последний аргумент метода должен иметь тип `AbortController`.
-2. Аргумент должен быть опциональным, чтобы TypeScript не требовал его явного указания при вызове `exec`.
-3. Код внутри действия должен использовать переданный `AbortController`, иначе отменить операцию не получится.
-
-Работает это так:
-
-1. **Метод `exec`**:
-   - создает `AbortController`, если он не передан явно, или использует тот, что передали;
-   - сохраняет его как состояние на время выполнения действия;
-   - передает `AbortController` в исходный метод, всегда в последнем аргументе.
-2. **Исходный метод**:
-   - использует переданный `AbortController` в запросах и других операциях.
-3. **Метод `abort`**:
-   - вызывает метод `abort` на сохраненном `AbortController`, это провоцирует выбрасывание исключения.
-4. **Метод `exec`**:
-   - перехватывает исключение;
-   - убеждается, что исключение является отменой;
-   - переводит действие в состояние `abort`, сохраняет причину отмены в свойстве `abortReason`;
-   - завершается успешно  и не возвращает данных, но действие остаётся в состоянии `abort`.
-
-```typescript
-class CartModel extends ProtoModel {
-  ...
-  @action async addProduct(
-    product: Product,
-    abortController = new AbortController(), // ✅ Правильно
-  ): Promise<void> {
-    await this.apiService.addProduct(product, abortController) // ✅ Правильно
-  }
-
-  // ❌ для этого действия abort() не работает, потому что не использует переданный AbortController
-  @action async deleteProduct(productId: number): Promise<void> {
-    const abortController = new AbortController() // ❌ Неправильно
-    await this.apiService.deleteProduct(productId, abortController) // ❌ Неправильно
-  }
-}
-
-const cartModel = CartModel.model(apiService)
-await cartModel.addProduct.exec(product)
-
-// Отменяем операцию
-cartModel.addProduct.abort()
-```
-
-Бывают случаи, когда одно действие вызывает другое, и может быть отменено согласно бизнес логике. Тогда дочернее действие тоже должно быть отменено автоматически.
-
-Чтобы это работало, необходимо:
-
-1. дочернее действие поддерживало `AbortController`;
-2. `AbortController` был общим — его нужно явно передать в дочернее действие последним аргументом.
-
-```typescript
-
-class SomeModel extends ProtoModel {
-
-  @action childAction(abortController?: AbortController ): Promise<void> {
-    ...
-  }
-  
-  @action parentAction(abortController?: AbortController ): Promise<void> {
-    // ✅ Правильно. Передаем abortController дальше, он общий 
-    await this.action(this.childAction).exec(abortController)
-  }
-}
-```
+See the full [Action API](/api/action) for all properties and methods.

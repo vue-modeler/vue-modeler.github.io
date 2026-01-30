@@ -7,17 +7,22 @@
 3. В разделе **Source** выберите **"GitHub Actions"** (не "Deploy from a branch")
 4. Сохраните изменения
 
-## Шаг 2: Проверка Base Path
+## Шаг 2: Выбор типа репозитория и Base Path
 
-Для репозитория `vue-modeler/docs` есть два варианта:
+### Вариант A: Отдельный репозиторий `vue-modeler.github.io` (рекомендуется для корневого URL)
+- **Создайте репозиторий** с именем `vue-modeler.github.io` в организации `vue-modeler`
+- **URL:** `https://vue-modeler.github.io` (без `/docs`)
+- **Base:** `/` (уже настроено в `.vitepress/config.ts`)
+- **Преимущества:** 
+  - Чистый URL без пути
+  - Отдельный репозиторий для документации
+  - Легче управлять версиями документации независимо от основного кода
 
-### Вариант A: Project Site (рекомендуется)
-- URL: `https://vue-modeler.github.io/docs/`
-- Base: `/docs/` (уже настроено)
-
-### Вариант B: Если хотите корневой путь
-- URL: `https://vue-modeler.github.io/docs/` (все равно будет `/docs/` в URL)
-- Base: `/` (нужно изменить в `.vitepress/config.ts`)
+### Вариант B: Репозиторий `docs` (Project Site)
+- **Текущий репозиторий:** `vue-modeler/docs`
+- **URL:** `https://vue-modeler.github.io/docs/` (с `/docs` в пути)
+- **Base:** `/docs/` (нужно изменить в `.vitepress/config.ts` на `/docs/`)
+- **Примечание:** GitHub Pages всегда добавляет имя репозитория в URL для Project Sites
 
 ## Шаг 3: Проверка деплоя
 

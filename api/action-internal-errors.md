@@ -1,61 +1,46 @@
 ---
-title: Внутренние ошибки
-description: Справочник по классам внутренних ошибок действий
+title: Internal Errors
+description: Action internal error classes reference
 outline: deep
 ---
 
-# Внутренние ошибки
+# Internal Errors
 
-Классы ошибок, связанные с некорректным жизненным циклом и состояниями действий. Эти ошибки обычно указывают на проблемы с настройкой или использованием действий и не должны обрабатываться в пользовательском коде.
+Error classes for invalid action lifecycle or state. They usually indicate misconfiguration or misuse and should not be caught in application code.
 
 ## ActionStatusConflictError
 
-Выбрасывается при попытке изменить состояние действия недопустимым способом.
+Thrown when trying to change action state in an invalid way.
 
-**Примеры ситуаций:**
-- Выполнение заблокированного действия
-- Попытка выполнить действие, которое уже находится в состоянии `pending`
-- Попытка разблокировать действие, которое не заблокировано
-
-**Пример:**
+**Examples:**
+- Running a locked action
+- Running an action that is already `pending`
+- Unlocking an action that is not locked
 
 ```typescript
-// Попытка выполнить заблокированное действие
 await action.lock()
-await action.exec() // Выбросит ActionStatusConflictError
+await action.exec() // Throws ActionStatusConflictError
 ```
 
 ## ActionUnexpectedAbortError
 
-Выбрасывается, когда происходит ошибка прерывания, но действие не находится в состоянии `pending` или `lock`.
+Thrown when an abort occurs but the action is not in `pending` or `lock`.
 
-**Примеры ситуаций:**
-- Прерывание действия, которое уже завершено
-- Прерывание действия в неподходящем состоянии
+**Examples:** Aborting an action that is already finished or in a wrong state.
 
 ## ActionInternalError
 
-Внутренняя ошибка, указывающая на проблему с настройкой или использованием действия.
+Internal error for action setup or usage problems.
 
-**Примеры ситуаций:**
-- Декоратор `@action` не применён к методу
-- Модель не содержит метод с указанным именем
-- Метод не является действием (не имеет флага `Action.actionFlag`)
-
-**Пример:**
+**Examples:**
+- `@action` decorator not applied to the method
+- Model does not have a method with the given name
+- Method is not an action (missing `Action.actionFlag`)
 
 ```typescript
-// Попытка создать действие из метода без декоратора @action
 class MyModel extends ProtoModel {
-  // Отсутствует @action
-  async fetchData() {
-    // ...
-  }
+  async fetchData() { } // Missing @action — ActionInternalError when creating Action
 }
-
-// При создании Action будет выброшена ActionInternalError
 ```
 
----
-
-См. также: [Action](/api/action) и [ActionError](/api/action-error).
+See also: [Action](/api/action), [ActionError](/api/action-error).

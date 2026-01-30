@@ -1,19 +1,19 @@
 ---
-title: Быстрый старт
-description: Пошаговое руководство по созданию первой модели с Vue Modeler
+title: Getting Started
+description: Step-by-step guide to creating your first model with Vue Modeler
 ---
 
-**Для быстрого старта сделаем простую задачу:** счетчик, который будет увеличиваться и уменьшаться при клике на кнопках `increment +` и `decrement -`. Изменение счетчика будет асинхронными действиями. Сделаем их долгими по 2 секунды. Во время выполнения действия, кнопки будут блокироваться. Дополнительно сделаем сброс счетчика в 0 по клику на кнопке `reset`.
+**For a quick start we'll build a simple task:** a counter that increments and decrements when clicking `increment +` and `decrement -`. Changing the counter will be async actions. We'll make them take 2 seconds. While an action runs, the buttons will be disabled. We'll also add reset to 0 on `reset` click.
 
-Этого достаточно для демонстрации возможностей и преимущества перед другими библиотеками.
+That's enough to show the features and advantages over other libraries.
 
-## 1. Определяем класс модели
+## 1. Define the model class
 
-`Counter` - стандартный класс унаследованный от `ProtoModel`, будет содержать свойство `_count` и методы `increment`, `decrement` и `reset`. Пометим их декоратором `@action`, чтобы они стали асинхронными действиями, и мы могли работать с ними как с реактивными объектами.
+`Counter` is a standard class extending `ProtoModel`, with property `_count` and methods `increment`, `decrement`, and `reset`. Mark them with the `@action` decorator so they become async actions and we can use them as reactive objects.
 
-Наследование от `ProtoModel` обязательно, он содержит служебные методы. Подробнее здесь.
+Extending `ProtoModel` is required; it provides internal helpers. More [here](/guides/model).
 
-Зависимость от API сервиса будет передаваться в конструктор. Определяем для него интерфейс.
+The API service dependency is passed in the constructor. We define an interface for it.
 
 ```typescript
 // getting-started/counter.ts
@@ -51,12 +51,12 @@ export class Counter extends ProtoModel {
 }
 ```
 
-## 2. Делаем заглушку API сервиса
+## 2. Create an API service stub
 
-Сделаем здесь просто заглушку для имитации медленных асинхронных запросов.
-Методы АПИ сервиса возвращают ошибки случайным образом. Это нужно, чтобы показать работу с ошибками в компоненте.
+We'll use a simple stub to simulate slow async requests.
+The API methods fail randomly. This is to show error handling in the component.
 
-Ошибки можно обрабатывать и в действиях модели, если это нужно по бизнес логике. Но сейчас нам не нужно, поэтому ошибки не перехватываем.
+Errors can also be handled inside model actions when needed by business logic. Here we don't, so we don't catch them.
 
 ```typescript
 // getting-started/api-service.ts
@@ -67,10 +67,10 @@ export const apiService = {
     return new Promise((resolve, reject) => {
       if (Math.random() < 0.5) {
         reject(new Error('increment failed'))
-        
-        return 
+
+        return
       }
-      
+
       setTimeout(
         () => resolve(currentCount + 1),
         timeout,
@@ -81,10 +81,10 @@ export const apiService = {
     return new Promise((resolve, reject) => {
       if (Math.random() > 0.5) {
         reject(new Error('decrement failed'))
-        
-        return 
+
+        return
       }
-      
+
       setTimeout(
         () => resolve(currentCount - 1),
         timeout,
@@ -94,13 +94,13 @@ export const apiService = {
 }
 ```
 
-## 3. Создаем модель и регистрируем в контейнере зависимостей
+## 3. Create the model and register it in the dependency container
 
-У каждого класса модели есть статический метод `model`, он создает модель.
+Every model class has a static `model` method that creates the model.
 
-Чтобы использовать модель в компоненте, нужно зарегистрировать её в контейнере зависимостей. Функция `provider` создает провайдер модели.
+To use the model in a component, register it in the dependency container. The `provider` function creates a model provider.
 
-Провайдер модели это функция, которая создает модель при первом вызове, а при последующих возвращает готовый экземпляр. Подробнее здесь.
+The provider creates the model on first use and returns the same instance on later calls. More [here](/guides/).
 
 ```typescript
 // getting-started/dc.ts
@@ -111,11 +111,11 @@ import { apiService } from './api-service'
 export const useCounter = provider(() => Counter.model(apiService))
 ```
 
-## 4. Используем модель в Vue компоненте
+## 4. Use the model in a Vue component
 
-Получаем модель из контейнера привычным способом, через `const counter = useCounter`. Это похоже на обычный composable.
+Get the model from the container the usual way: `const counter = useCounter`. It works like a normal composable.
 
-В компоненте максимально простой код, который отвечает только за отображение.  Вся бизнес логика в модели. Состояния и ошибки действий получаем из самих  действий.
+The component stays minimal and only handles display. All business logic is in the model. Action state and errors come from the actions themselves.
 
 ```vue
 // getting-started/app-counter.vue
@@ -125,14 +125,14 @@ import { useCounter } from './dc'
 
 const counter = useCounter()
 
-const isBusy = computed(() => 
-  counter.increment.isPending 
+const isBusy = computed(() =>
+  counter.increment.isPending
   || counter.decrement.isPending
   || counter.reset.isPending
 )
 
-const error = computed(() => 
-  counter.increment.error?.cause 
+const error = computed(() =>
+  counter.increment.error?.cause
   || counter.decrement.error?.cause
   || counter.reset.error?.cause
 )
@@ -147,21 +147,21 @@ const error = computed(() =>
       Current value: {{ counter.count }}
     </div>
 
-    <button 
+    <button
       :disabled="isBusy"
       @click="counter.increment.exec()"
     >
       {{ counter.increment.isPending ? 'increment ...' : 'increment +' }}
     </button>
-    
-    <button 
+
+    <button
       :disabled="isBusy"
       @click="counter.decrement.exec()"
     >
-      {{ counter.decrement.isPending ?   'decrement ...' : 'decrement -' }}
+      {{ counter.decrement.isPending ? 'decrement ...' : 'decrement -' }}
     </button>
-    
-    <button 
+
+    <button
       :disabled="isBusy"
       @click="counter.reset.exec()"
     >
@@ -169,5 +169,4 @@ const error = computed(() =>
     </button>
   </div>
 </template>
-
 ```

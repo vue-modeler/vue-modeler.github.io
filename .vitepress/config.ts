@@ -7,105 +7,163 @@ const base = '/' // Репозиторий: https://github.com/vue-modeler/vue-m
 
 export default defineConfig({
   title: 'Vue Modeler',
-  description: 'ООП для управления состоянием во Vue',
-  
-  // Базовый URL для деплоя на GitHub Pages
+  description: 'OOP for state management in Vue',
+
   base,
-  
+
   head: [
-    // Favicon - VitePress автоматически добавляет base к путям в head
     ['link', { rel: 'icon', href: '/logo.webp', type: 'image/webp' }],
-    // Стандартный favicon.ico для старых браузеров (если есть)
-    // ['link', { rel: 'shortcut icon', href: '/favicon.ico' }],
-    
-    // Аналитика
-    
-    // Cloudflare Web Analytics (бесплатно, GDPR compliant, без cookie banner)
-    // Замените 'your-token' на токен из Cloudflare Dashboard → Analytics → Web Analytics
     ['script', { src: 'https://static.cloudflareinsights.com/beacon.min.js', 'data-cf-beacon': '{"token": "75dc58aef7764625995d8740de68d04e"}', defer: '' }],
-    
-    // Plausible Analytics (бесплатно до 10k просмотров/месяц, GDPR compliant, без cookie banner)
-    // ['script', { 'data-domain': 'vue-modeler.github.io', src: 'https://plausible.io/js/script.js', defer: true }],
-    
-    // Umami Analytics (self-hosted, полностью бесплатно)
-    // ['script', { 'data-website-id': 'your-website-id', src: 'https://analytics.example.com/script.js', defer: true }],
-    
-    // GoatCounter (бесплатно для небольших сайтов)
-    // ['script', { 'data-goatcounter': 'https://your-code.goatcounter.com/count', src: 'https://gc.zgo.at/count.js', async: true }],
   ],
-  
-  themeConfig: {
-    logo: '/logo.webp', // VitePress автоматически добавляет base
-    nav: [
-      { text: 'Введение', link: '/introduction/', activeMatch: '/introduction/' },
-      { text: 'Руководство', link: '/guides/' , activeMatch: '/guides/'},
-      { text: 'API', link: '/api/', activeMatch: '/api/' },
-      { text: 'Продвинутые темы', link: '/advanced/testing', activeMatch: '/advanced/' },
-    ],
 
-    sidebar: {
-      '/api/': [
-        {
-          text: 'API',
-          items: [
-            { text: 'Обзор', link: '/api/' },
-            { text: 'ProtoModel', link: '/api/proto-model' },
-            { text: 'Action', link: '/api/action' },
-            { text: 'ActionError', link: '/api/action-error' },
-            { text: 'Внутренние ошибки', link: '/api/action-internal-errors' },
-            { text: 'Интерфейсы и типы', link: '/api/interfaces' },
-          ]
+  locales: {
+    root: {
+      label: 'English',
+      lang: 'en',
+      title: 'Vue Modeler',
+      description: 'OOP for state management in Vue',
+      themeConfig: {
+        nav: [
+          { text: 'Introduction', link: '/introduction/', activeMatch: '/introduction/' },
+          { text: 'Guide', link: '/guides/', activeMatch: '/guides/' },
+          { text: 'API', link: '/api/', activeMatch: '/api/' },
+          { text: 'Advanced', link: '/advanced/testing', activeMatch: '/advanced/' },
+        ],
+        sidebar: {
+          '/api/': [
+            {
+              text: 'API',
+              items: [
+                { text: 'Overview', link: '/api/' },
+                { text: 'ProtoModel', link: '/api/proto-model' },
+                { text: 'Action', link: '/api/action' },
+                { text: 'ActionError', link: '/api/action-error' },
+                { text: 'Internal Errors', link: '/api/action-internal-errors' },
+                { text: 'Interfaces and Types', link: '/api/interfaces' },
+              ]
+            },
+          ],
+          '/api': [
+            {
+              text: 'API',
+              items: [
+                { text: 'Overview', link: '/api/' },
+                { text: 'ProtoModel', link: '/api/proto-model' },
+                { text: 'Action', link: '/api/action' },
+                { text: 'ActionError', link: '/api/action-error' },
+                { text: 'Internal Errors', link: '/api/action-internal-errors' },
+                { text: 'Interfaces and Types', link: '/api/interfaces' },
+              ]
+            },
+          ],
+          '/': [
+            {
+              text: 'Introduction',
+              items: [
+                { text: 'What is vue-modeler', link: '/introduction/' },
+                { text: 'Installation', link: '/introduction/installation' },
+                { text: 'Getting Started', link: '/introduction/getting-started' },
+              ]
+            },
+            {
+              text: 'Guides',
+              items: [
+                { text: 'Dependency Container', link: '/guides/' },
+                { text: 'Model', link: '/guides/model' },
+                { text: 'Action', link: '/guides/action' },
+              ]
+            },
+            {
+              text: 'Advanced',
+              items: [
+                { text: 'Argument Validation', link: '/advanced/args-validation' },
+                { text: 'Testing', link: '/advanced/testing' },
+                { text: 'Working with SSR', link: '/advanced/ssr' },
+              ]
+            },
+          ],
         },
-      ],
-      '/api': [
-        {
-          text: 'API',
-          items: [
-            { text: 'Обзор', link: '/api/' },
-            { text: 'ProtoModel', link: '/api/proto-model' },
-            { text: 'Action', link: '/api/action' },
-            { text: 'ActionError', link: '/api/action-error' },
-            { text: 'Внутренние ошибки', link: '/api/action-internal-errors' },
-            { text: 'Интерфейсы и типы', link: '/api/interfaces' },
-          ]
-        },
-      ],
-      '/': [
-        {
-          text: 'Введение',
-          items: [
-            { text: 'Что такое vue-modeler', link: '/introduction/' },
-            { text: 'Установка', link: '/introduction/installation' },
-            { text: 'Быстрый старт', link: '/introduction/getting-started' },
-          ]
-        },
-        {
-          text: 'Руководства',
-          items: [
-            { text: 'Контейнер зависимостей', link: '/guides/' },
-            { text: 'Модель', link: '/guides/model' },
-            { text: 'Действие', link: '/guides/action' },
-          ]
-        },
-        {
-          text: 'Продвинутые темы',
-          items: [
-            { text: 'Валидация аргументов', link: '/advanced/args-validation' },
-            { text: 'Тестирование', link: '/advanced/testing' },
-            { text: 'Работа с SSR', link: '/advanced/ssr' },
-          ]
-        },
-      ],
+      },
     },
+    ru: {
+      label: 'Русский',
+      lang: 'ru',
+      link: '/ru/',
+      title: 'Vue Modeler',
+      description: 'ООП для управления состоянием во Vue',
+      themeConfig: {
+        nav: [
+          { text: 'Введение', link: '/ru/introduction/', activeMatch: '/ru/introduction/' },
+          { text: 'Руководство', link: '/ru/guides/', activeMatch: '/ru/guides/' },
+          { text: 'API', link: '/ru/api/', activeMatch: '/ru/api/' },
+          { text: 'Продвинутые темы', link: '/ru/advanced/testing', activeMatch: '/ru/advanced/' },
+        ],
+        sidebar: {
+          '/ru/api/': [
+            {
+              text: 'API',
+              items: [
+                { text: 'Обзор', link: '/ru/api/' },
+                { text: 'ProtoModel', link: '/ru/api/proto-model' },
+                { text: 'Action', link: '/ru/api/action' },
+                { text: 'ActionError', link: '/ru/api/action-error' },
+                { text: 'Внутренние ошибки', link: '/ru/api/action-internal-errors' },
+                { text: 'Интерфейсы и типы', link: '/ru/api/interfaces' },
+              ]
+            },
+          ],
+          '/ru/api': [
+            {
+              text: 'API',
+              items: [
+                { text: 'Обзор', link: '/ru/api/' },
+                { text: 'ProtoModel', link: '/ru/api/proto-model' },
+                { text: 'Action', link: '/ru/api/action' },
+                { text: 'ActionError', link: '/ru/api/action-error' },
+                { text: 'Внутренние ошибки', link: '/ru/api/action-internal-errors' },
+                { text: 'Интерфейсы и типы', link: '/ru/api/interfaces' },
+              ]
+            },
+          ],
+          '/ru/': [
+            {
+              text: 'Введение',
+              items: [
+                { text: 'Что такое vue-modeler', link: '/ru/introduction/' },
+                { text: 'Установка', link: '/ru/introduction/installation' },
+                { text: 'Быстрый старт', link: '/ru/introduction/getting-started' },
+              ]
+            },
+            {
+              text: 'Руководства',
+              items: [
+                { text: 'Контейнер зависимостей', link: '/ru/guides/' },
+                { text: 'Модель', link: '/ru/guides/model' },
+                { text: 'Действие', link: '/ru/guides/action' },
+              ]
+            },
+            {
+              text: 'Продвинутые темы',
+              items: [
+                { text: 'Валидация аргументов', link: '/ru/advanced/args-validation' },
+                { text: 'Тестирование', link: '/ru/advanced/testing' },
+                { text: 'Работа с SSR', link: '/ru/advanced/ssr' },
+              ]
+            },
+          ],
+        },
+      },
+    },
+  },
 
+  themeConfig: {
+    logo: '/logo.webp',
     socialLinks: [
       { icon: 'github', link: 'https://github.com/vue-modeler' }
     ],
-
     search: {
       provider: 'local'
     },
-
     footer: {
       message: 'Released under the MIT License.',
       copyright: 'Copyright © 2024-present Aleksandr Bratko'
@@ -122,11 +180,9 @@ export default defineConfig({
   vite: {
     server: {
       watch: {
-        // Use polling instead of native file watcher
         usePolling: true,
         interval: 1000,
         binaryInterval: 3000,
-        // Ignore more directories
         ignored: [
           '**/node_modules/**',
           '**/.git/**',
@@ -147,15 +203,13 @@ export default defineConfig({
         ]
       },
       fs: {
-        // Allow serving files from these directories
         allow: [
-          '..', // Allow parent directory
+          '..',
           '/home/abratko/webprojects/vue-modeler'
         ]
       }
     },
     optimizeDeps: {
-      // Force dependency pre-bundling
       include: ['vue', 'vue-router']
     }
   }

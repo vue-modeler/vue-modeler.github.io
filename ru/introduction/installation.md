@@ -1,9 +1,9 @@
 ---
-title: Installation
-description: How to install and configure Vue Modeler
+title: Установка
+description: Инструкции по установке и настройке Vue Modeler
 ---
 
-## Install packages
+## Ставим пакеты
 
 ::: code-group
 
@@ -17,12 +17,12 @@ npm install @vue-modeler/dc@^2.0.0 @vue-modeler/model
 
 :::
 
-**[@vue-modeler/model](https://www.npmjs.com/package/@vue-modeler/model)** requires no extra configuration.
-**[@vue-modeler/dc](https://www.npmjs.com/package/@vue-modeler/dc)** must be registered in the app.
+**[@vue-modeler/model](https://www.npmjs.com/package/@vue-modeler/model)** не требует дополнительных настроек.
+**[@vue-modeler/dc](https://www.npmjs.com/package/@vue-modeler/dc)** нужно подключить в приложение.
 
-## Register the container
+## Подключаем контейнер
 
-### Plain Vue project
+### Нативный Vue проект
 
 ::: code-group
 
@@ -47,9 +47,9 @@ new Vue({
 
 :::
 
-### Nuxt project
+### Nuxt проект
 
-Create a Nuxt plugin in the `plugins` folder:
+Просто создайте плагин для Nuxt в папке `plugins`
 
 ```typescript
 // plugins/vue-modeler-dc.ts
@@ -60,4 +60,4 @@ export default defineNuxtPlugin((nuxtApp) => {
 })
 ```
 
-You're ready to go!
+Всё готово для начала работы!

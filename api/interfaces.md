@@ -1,58 +1,28 @@
 ---
-title: Интерфейсы и типы
-description: Справочник по публичным интерфейсам и типам @vue-modeler/model
+title: Interfaces and Types
+description: Public interfaces and types for @vue-modeler/model
 outline: deep
 ---
 
-## Интерфейсы
+## Interfaces
 
 ### ActionLike
 
-Интерфейс, описывающий публичный контракт для экземпляров `Action` без деталей реализации.
+Public contract for `Action` instances without implementation details.
 
-#### Свойства
+#### Properties (read-only)
 
-Все свойства доступны только для чтения и соответствуют свойствам класса `Action`:
+Same as `Action`: `name`, `owner`, `possibleStates`, `state`, `abortController`, `args`, `promise`, `error`, `abortReason`, `isPending`, `isError`, `isReady`, `isLock`, `isAbort`.
 
-| Свойство | Тип |
-|----------|-----|
-| `name` | `string` |
-| `owner` | ``Model<T>`` |
-| `possibleStates` | `ActionStateName[]` |
-| `state` | `ActionStateName` |
-| `abortController` | `null \| AbortController` |
-| `args` | `Args \| never[]` |
-| `promise` | ``null \| Promise<void>`` |
-| `error` | `null \| ActionError` |
-| `abortReason` | `unknown` |
-| `isPending` | `boolean` |
-| `isError` | `boolean` |
-| `isReady` | `boolean` |
-| `isLock` | `boolean` |
-| `isAbort` | `boolean` |
+#### Methods
 
-#### Методы
+Same as `Action`: `is`, `validate`, `exec`, `abort`, `lock`, `unlock`, `resetError`, `toString`.
 
-Все методы соответствуют публичным методам класса `Action`:
-
-| Метод | Сигнатура |
-|-------|-----------|
-| `is` | `is(...args: ActionStateName[]): boolean` |
-| `validate` | `validate(...args: Args): Error[]` |
-| `exec` | `exec(...args: Args): Promise&lt;void&gt;` |
-| `abort` | `abort(reason?: unknown): Promise&lt;void&gt;` |
-| `lock` | `lock(): Promise&lt;void&gt;` |
-| `unlock` | `unlock(): this` |
-| `resetError` | `resetError(): this` |
-| `toString` | `toString(): string` |
-
-См. также: [Action](/api/action) и [ActionError](/api/action-error).
+See also: [Action](/api/action), [ActionError](/api/action-error).
 
 ---
 
-## Типы
-
-Вспомогательные типы, используемые в публичном API моделей и действий.
+## Types
 
 ### ActionStateName
 
@@ -62,12 +32,12 @@ type ActionStateName = 'pending' | 'error' | 'lock' | 'ready' | 'abort'
 
 ### Model&lt;T&gt;
 
-Тип, представляющий экземпляр модели, обёрнутый прокси. Предоставляет доступ к действиям как к экземплярам `Action` вместо методов.
+Type for a model instance wrapped in a proxy. Exposes actions as `Action` instances instead of methods.
 
 ### OriginalMethod
 
-Тип, представляющий оригинальный метод до применения декоратора `@action`.
+Original method type before `@action` is applied.
 
 ### OriginalMethodWrapper
 
-Тип, представляющий метод после применения декоратора `@action`.
+Method type after `@action` is applied.

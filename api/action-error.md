@@ -1,79 +1,47 @@
 ---
 title: ActionError
-description: Справочник по классу ошибки ActionError
+description: ActionError class reference
 outline: deep
 ---
 
-Класс ошибки, представляющий исключение, произошедшее во время выполнения действия. Сохраняется в свойстве экземпляра [`Action.error`](/api/action#error)
+Error class for an exception thrown during action execution. Stored in [`Action.error`](/api/action#error).
 
 ::: tip
- Это исключение, которое должно быть обработано и отображено пользователю в слое UI.
+This is the exception you should handle and show to the user in the UI.
 :::
 
-## Конструктор
+## Constructor
 
 ### `new ActionError(actionName: string, options: { cause: Error })`
 
-Создаёт новый экземпляр ActionError.
+**Parameters:** `actionName` — name of the action; `options.cause` — original error.
 
-**Параметры:**
+**Properties:** `name: 'ActionError'`, `message` from cause.
 
-- `actionName` - Имя действия, в котором произошла ошибка
-- `options.cause` - Оригинальная ошибка, вызвавшая этот ActionError
+## Instance properties
 
-**Свойства:**
+### `cause: Error` (read-only)
 
-- `name: string` - Всегда `'ActionError'`
-- `message: string` - Сообщение из ошибки-причины
+The original error that caused this ActionError.
 
-## Свойства экземпляра
-
-### `cause: Error` (только чтение)
-
-Оригинальная ошибка, вызвавшая этот ActionError.
-
-## Методы экземпляра
+## Instance methods
 
 ### `throwCause(): void`
 
-Выбрасывает оригинальную ошибку-причину.
+Rethrows the original cause.
 
-**Пример:**
+### `toString(): string`
 
-```typescript
-if (action.error) {
-  action.error.throwCause() // Выбрасывает оригинальную ошибку
-}
-```
+Returns the cause's message.
 
-#### `toString(): string`
-
-Возвращает сообщение из ошибки-причины.
-
-**Возвращает:** Строка сообщения об ошибке
-
-## Пример использования
+## Example
 
 ```typescript
-@action async fetchUser(): Promise<void> {
-  try {
-    const user = await this.api.fetchUser()
-    this._user = user
-  } catch (error) {
-    // Ошибка автоматически перехватывается и оборачивается в ActionError
-    // Доступ к ней через action.error
-  }
-}
-
-// В компоненте или внешнем коде
 await model.fetchUser.exec()
 if (model.fetchUser.error) {
-  console.error('Действие не выполнено:', model.fetchUser.error.cause)
-  // Или повторно выбросить оригинальную ошибку
+  console.error('Action failed:', model.fetchUser.error.cause)
   model.fetchUser.error.throwCause()
 }
 ```
 
----
-
-См. также: [Action](/api/action) и [Внутренние ошибки](/api/action-internal-errors).
+See also: [Action](/api/action), [Internal errors](/api/action-internal-errors).

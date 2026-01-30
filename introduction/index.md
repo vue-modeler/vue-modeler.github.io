@@ -1,92 +1,91 @@
 ---
-title: Введение
-description: Обзор архитектуры и основных концепций Vue Modeler
+title: Introduction
+description: Overview of Vue Modeler architecture and core concepts
 outline: deep
 ---
 
-**Vue Modeler** — комплексное решение для управления состоянием в Vue.js приложениях, состоящее из двух взаимодополняющих библиотек:
+**Vue Modeler** is a comprehensive solution for state management in Vue.js applications, consisting of two complementary libraries:
 
-- **[@vue-modeler/dc](https://www.npmjs.com/package/@vue-modeler/dc)** — контейнер зависимостей.
-- **[@vue-modeler/model](https://www.npmjs.com/package/@vue-modeler/model)** — библиотека для создания моделей (реактивных объектов с состоянием)
+- **[@vue-modeler/dc](https://www.npmjs.com/package/@vue-modeler/dc)** — dependency container.
+- **[@vue-modeler/model](https://www.npmjs.com/package/@vue-modeler/model)** — library for creating models (reactive objects with state)
 
-## Ключевые концепции
+## Key concepts
 
-- **Модель вместо хранилища**. Нет глобального хранилища состояния.
-  Нет хранилища — нет проблем. Состояние инкапсулировано в модели и является реактивным. Вне модели оно доступно только для чтения и наблюдения. Уничтожение модели равно уничтожению состояния.
+- **Model instead of store**. No global state store.
+  No store — no problem. State is encapsulated in the model and is reactive. Outside the model it is read-only and observable. Destroying the model destroys the state.
 
-- **Действие — объект с реактивным состоянием и поведением**. Внутри класса модели Действие — это асинхронный метод меняющий состояние, снаружи (в компонентах и других моделях) — это реактивный объект с состоянием и поведением.
+- **Action — object with reactive state and behavior**. Inside the model class, Action is an async method that changes state; outside (in components and other models) — a reactive object with state and behavior.
 
-- **Зависимости через внедрение и контейнер зависимостей**
+- **Dependencies via injection and dependency container**
 
-  - Модель принимает зависимости как аргументы конструктора. Нет прямых импортов из других модулей. Это позволяет легко извлекать связанные по смыслу модели в отдельные модули и использовать в других проектах.
+  - The model receives dependencies as constructor arguments. No direct imports from other modules. This makes it easy to extract related models into separate modules and reuse in other projects.
 
-  - Не нужно думать как создать, получить или удалить модель после использования — за это отвечает контейнер.
+  - No need to think about how to create, get, or remove a model after use — the container handles it.
 
-## Ключевые особенности
+## Key features
 
-- **В основе ООП**.
-  Модель определяется как стандартный класс.
-  Наследование, инкапсуляция, полиморфизм, деструктор доступны по умолчанию.
+- **OOP-based**.
+  Model is defined as a standard class.
+  Inheritance, encapsulation, polymorphism, destructor are available by default.
 
-- **Сохраняет типобезопасность**.
-  Все подсказки автодополнения будут работать как внутри, так и вне контекста класса.
+- **Type safety preserved**.
+  All autocomplete hints work both inside and outside the class context.
 
-- **Реактивность Vue**.
-Всё работает на основе реактивности Vue. Не нужно изучать дополнительные API
-или подходы для создания реактивных объектов.
+- **Vue reactivity**.
+  Everything works on top of Vue reactivity. No need to learn extra APIs or approaches for reactive objects.
 
-- **Простота тестирования**.
-[@vue-modeler/model](https://www.npmjs.com/package/@vue-modeler/model) позволяет писать меньше кода, это значит нужно меньше тестов. Тестирование моделей не отличается от тестирования экземпляров обычных классов.
+- **Easy testing**.
+  [@vue-modeler/model](https://www.npmjs.com/package/@vue-modeler/model) lets you write less code, which means fewer tests. Testing models is the same as testing plain class instances.
 
 ---
 
-## Причины создания
+## Why it was created
 
-### Шаблонный код в действиях
+### Boilerplate in actions
 
-**Проблема:**
-  Действия часто сопровождаются повторяющимся кодом для отслеживания состояния выполнения
-  через дополнительные переменные: `isLoading`, `isPending`.
-  В этом коде нет ценности для бизнес-логики, но он раздувает кодовую базу.
+**Problem:**
+  Actions are often accompanied by repetitive code to track execution state
+  via extra variables: `isLoading`, `isPending`.
+  This code adds no business value but bloats the codebase.
 
-**Решение:**
- Действие — это объект с реактивными свойствами, отражающими статус его выполнения:
- `ready`, `pending`, `lock`, `abort`, `error`. Дополнительный код не нужен.
+**Solution:**
+  Action is an object with reactive properties reflecting its execution status:
+  `ready`, `pending`, `lock`, `abort`, `error`. No extra code needed.
 
-### Отмена или блокировка действия
+### Cancelling or locking an action
 
-**Проблема:** Отмена или блокировка действия не частая, но необходимая операция.
-Все решают эту задачу по-своему, но в основе лежит общий паттерн.
-Разные реализации одного и того же паттерна усложняют поддержку и повторное использование.
+**Problem:** Cancelling or locking an action is uncommon but necessary.
+Everyone solves it differently, but the pattern is the same.
+Different implementations of the same pattern make maintenance and reuse harder.
 
-**Решение:** Действие содержит методы `lock` и `abort` для блокировки и отмены выполнения.
-Не нужно писать дополнительный код и поддерживать его.
+**Solution:** Action provides `lock` and `abort` methods for locking and cancelling.
+No extra code to write or maintain.
 
-### Обработка исключений
+### Exception handling
 
-**Проблема:** Обработка исключений дополнительный источник проблем:
+**Problem:** Exception handling is an extra source of issues:
 
-- разработчики забывают о ней;
-- каждый разработчик обрабатывает её по-своему;
-- регламенты не гарантируют, что  исключения будет обработано как нужно;
-- обработка требует всегда внимательного ревью кода.
+- developers forget about it;
+- each developer handles it differently;
+- guidelines don't guarantee exceptions are handled correctly;
+- handling always needs careful code review.
 
-**Решение:** Действие перехватывает исключения, сохраняет их как часть состояния
-и предоставляет единый интерфейс для обработки. Разработчик не сможет обрабатывать их по другому.
+**Solution:** Action catches exceptions, stores them as part of state
+and provides a single interface for handling. Developers can't handle them differently.
 
-### Устаревшие паттерны
+### Outdated patterns
 
-**Проблема:**  Pinia использует устаревший паттерн фабричной функции для создания хранилища.
-Такое решение "тянет" за собой дополнительные шаблоны для эмуляции наследования и полиморфизма.
+**Problem:** Pinia uses an outdated factory function pattern for stores.
+That approach brings extra patterns to emulate inheritance and polymorphism.
 
-**Решение:** Поддержка классов и ООП из коробки.
+**Solution:** Class and OOP support out of the box.
 
-### Слишком много реактивности
+### Too much reactivity
 
-**Проблема:** Хранилище Pinia — это объект с реактивными свойствами.
-Но внутри фабричной функции это реактивные переменные, созданные с помощью Reactivity API Vue.
-Получаем двойную реактивность и разные интерфейсы взаимодействия на одних и тех же данных.
+**Problem:** A Pinia store is an object with reactive properties.
+But inside the factory function those are reactive variables created with Vue's Reactivity API.
+You get double reactivity and different interfaces for the same data.
 
-**Решение:** Модели — это shallow reactive объекты из коробки.
-Публичные и защищенные свойства будут реактивны снаружи и внутри
-без явного применения АПИ реактивности Vue.
+**Solution:** Models are shallow reactive objects out of the box.
+Public and protected properties are reactive both outside and inside
+without explicitly using Vue's reactivity API.

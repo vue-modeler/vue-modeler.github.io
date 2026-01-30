@@ -1,8 +1,10 @@
 ---
-title: Валидация аргументов
-description: Как валидировать аргументы моделей и действий в Vue Modeler
+title: Argument Validation
+description: How to validate model and action arguments in Vue Modeler
 ---
 
-::: warning В разработке
-Эта страница находится в разработке. Содержимое будет добавлено в ближайшее время.
+::: warning In development
+This page is under development. Content will be added soon.
 :::
+
+You can override `validateArgs` on your model to add custom validation for action arguments. See [ProtoModel — validateArgs](/api/proto-model#validateargs).
