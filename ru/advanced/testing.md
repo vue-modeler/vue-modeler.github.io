@@ -85,7 +85,7 @@ export class Cart extends ProtoModel {
         // user вышел, сбрасываем корзину.  
         this._items = new Set()
       },
-      { immediately: true },
+      { immediate: true },
     )
   }
 
