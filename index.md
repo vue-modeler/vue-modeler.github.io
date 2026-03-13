@@ -4,7 +4,7 @@ layout: home
 hero:
   name: "Vue Modeler"
   text: "OOP for state management in Vue"
-  tagline: "No store — no problem. Less boilerplate — more productivity"
+  tagline: "No store — no problem. Less code - faster development"
   image:
     src: /logo.webp
   actions:
@@ -14,6 +14,11 @@ hero:
     - theme: alt
       text: GitHub
       link: https://github.com/vue-modeler
+    - theme: sponsor
+      text: Donate
+      link: https://www.donationalerts.com/r/avbratko
+      target: _blank
+      rel: noopener noreferrer
 
 features:
   - icon: 📦
